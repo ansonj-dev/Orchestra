@@ -1,0 +1,12 @@
+project_id = "orchestra-webmcp"
+
+[api]
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+port = 54323

@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+web/node_modules/
+
+# Next.js build output
+.next/
+web/.next/
+out/
+web/out/
+build/
+web/build/
+
+# Environment variables
+.env
+.env*.local
+.env.production
+.env.development
+
+# Debug and system logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.DS_Store
+Thumbs.db
+*.pem
+
+# IDE & workspace artifacts
+.idea/
+.vscode/
+*.tsbuildinfo
+web/next-env.d.ts

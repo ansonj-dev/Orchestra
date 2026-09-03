@@ -1,0 +1,38 @@
+name: Orchestra WebMCP CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Validate Chrome Extension Structure
+        run: |
+          echo "Validating Chrome Extension Manifest V3..."
+          test -f extension/manifest.json
+          test -f extension/background.js
+          test -f extension/content.js
+          test -f extension/popup.html
+          echo "Extension verification passed."
+
+      - name: Install Web Dependencies
+        working-directory: ./web
+        run: npm ci
+
+      - name: Build Web Application
+        working-directory: ./web
+        run: npm run build

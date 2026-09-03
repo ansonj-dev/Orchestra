@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orchestra WebMCP Manager</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { width: 340px; background: #030712; color: #f9fafb; padding: 16px; }
+    .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1f2937; padding-bottom: 12px; margin-bottom: 14px; }
+    .logo-area { display: flex; align-items: center; gap: 8px; }
+    .logo-icon { width: 28px; height: 28px; background: linear-gradient(135deg, #06b6d4, #2563eb); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; color: #fff; box-shadow: 0 0 12px rgba(6, 182, 212, 0.4); }
+    .logo-title { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; }
+    .badge { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    
+    .wallet-card { background: linear-gradient(180deg, #111827 0%, #0b0f19 100%); border: 1px solid #1f2937; border-radius: 12px; padding: 14px; margin-bottom: 14px; position: relative; overflow: hidden; }
+    .wallet-card::before { content: ''; position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: radial-gradient(circle, rgba(6, 182, 212, 0.25) 0%, transparent 70%); border-radius: 50%; }
+    .wallet-label { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    .wallet-balance { font-size: 26px; font-weight: 800; color: #06b6d4; margin: 4px 0 8px; font-mono: monospace; }
+    .wallet-actions { display: flex; gap: 8px; }
+    .btn { flex: 1; padding: 7px 10px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; text-align: center; text-decoration: none; }
+    .btn-primary { background: #06b6d4; color: #030712; }
+    .btn-primary:hover { background: #22d3ee; }
+    .btn-secondary { background: #1f2937; color: #e5e7eb; border: 1px solid #374151; }
+    .btn-secondary:hover { background: #374151; }
+
+    .section-title { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; display: flex; justify-content: space-between; }
+    .tool-list { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; max-height: 140px; overflow-y: auto; }
+    .tool-item { background: #111827; border: 1px solid #1f2937; border-radius: 6px; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; }
+    .tool-item-name { font-family: monospace; color: #e5e7eb; font-weight: 600; }
+    .tool-item-status { font-size: 9px; color: #10b981; }
+
+    .circuit-badge { display: flex; align-items: center; gap: 6px; background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.2); padding: 6px 10px; border-radius: 6px; font-size: 10px; color: #fde047; margin-bottom: 14px; }
+    .pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: #eab308; box-shadow: 0 0 6px #eab308; }
+
+    .footer { display: flex; gap: 8px; border-top: 1px solid #1f2937; padding-top: 10px; }
+    .footer-link { flex: 1; text-align: center; font-size: 11px; color: #9ca3af; text-decoration: none; padding: 6px; border-radius: 4px; background: #0f172a; transition: color 0.2s; }
+    .footer-link:hover { color: #06b6d4; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo-area">
+      <div class="logo-icon">O</div>
+      <div class="logo-title">Orchestra</div>
+    </div>
+    <span class="badge" id="webmcp-status">WebMCP Ready</span>
+  </div>
+
+  <div class="wallet-card">
+    <div class="wallet-label">Pre-Paid Ledger Balance</div>
+    <div class="wallet-balance" id="wallet-display">100.00 <span style="font-size:14px;color:#9ca3af;">CR</span></div>
+    <div class="wallet-actions">
+      <button class="btn btn-primary" id="btn-refill">+ 50 CR Top-Up</button>
+      <button class="btn btn-secondary" id="btn-sync">Sync Active Tab</button>
+    </div>
+  </div>
+
+  <div class="circuit-badge">
+    <span class="pulse-dot"></span>
+    <span>Circuit Breaker: <strong>Active</strong> (Hard stop at 0.00 CR)</span>
+  </div>
+
+  <div class="section-title">
+    <span>Active Injected Tools</span>
+    <span id="tool-count" style="color:#06b6d4;">3 loaded</span>
+  </div>
+
+  <ul class="tool-list" id="tool-list">
+    <li class="tool-item">
+      <span class="tool-item-name">shopify_checkout_fast</span>
+      <span class="tool-item-status">● Live</span>
+    </li>
+    <li class="tool-item">
+      <span class="tool-item-name">extract_analytics_table</span>
+      <span class="tool-item-status">● Live</span>
+    </li>
+    <li class="tool-item">
+      <span class="tool-item-name">margin_context_editor</span>
+      <span class="tool-item-status">● Live</span>
+    </li>
+  </ul>
+
+  <div class="footer">
+    <a href="http://localhost:3000" target="_blank" class="footer-link">Marketplace</a>
+    <a href="http://localhost:3000/dashboard" target="_blank" class="footer-link">Ledger</a>
+    <a href="http://localhost:3000/demo-target" target="_blank" class="footer-link">Live Target</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+# Orchestra — Render Infrastructure as Code
+# One-click deploy: Web Service (Next.js) + PostgreSQL Database
+
+databases:
+  - name: orchestra-db
+    databaseName: orchestra
+    user: orchestra
+    plan: free          # Upgrade to starter ($7/mo) for persistence beyond 90 days
+
+services:
+  - type: web
+    name: orchestra-web
+    runtime: node
+    plan: free          # Upgrade to starter ($7/mo) for always-on
+    rootDir: web
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/wallet
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: orchestra-db
+          property: connectionString
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false       # Set this manually after first deploy
