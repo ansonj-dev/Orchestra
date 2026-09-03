@@ -13,7 +13,7 @@ services:
     runtime: node
     plan: free          # Upgrade to starter ($7/mo) for always-on
     rootDir: web
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /api/wallet
     envVars:
