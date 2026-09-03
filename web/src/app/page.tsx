@@ -42,6 +42,22 @@ export default function MarketplaceLandingPage() {
 
   useEffect(() => {
     fetchTools();
+
+    const handleRentalChanged = () => {
+      fetchTools();
+    };
+    const handleExecuted = (e: any) => {
+      setRecentExecution(e.detail);
+      setTimeout(() => setRecentExecution(null), 4000);
+    };
+
+    window.addEventListener('orchestra:rental-changed', handleRentalChanged);
+    window.addEventListener('orchestra:tool-executed', handleExecuted);
+
+    return () => {
+      window.removeEventListener('orchestra:rental-changed', handleRentalChanged);
+      window.removeEventListener('orchestra:tool-executed', handleExecuted);
+    };
   }, [selectedCategory, searchQuery]);
 
   return (
@@ -68,13 +84,17 @@ export default function MarketplaceLandingPage() {
           </p>
 
           <div className="flex flex-wrap justify-center gap-3 pt-4 font-mono text-xs">
-            <Link
-              href="/ide-bridge"
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('orchestra:open-webmcp-inspector'));
+                }
+              }}
               className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:opacity-95 text-white font-bold px-6 py-3 rounded-xl transition shadow-lg shadow-cyan-500/20 flex items-center gap-2"
             >
-              <span>Connect IDE (Cursor / Claude)</span>
+              <span>⚡ Inspect WebMCP Tools</span>
               <span>→</span>
-            </Link>
+            </button>
             <Link
               href="/demo-target"
               className="bg-slate-900 hover:bg-slate-800 text-cyan-400 font-semibold px-6 py-3 rounded-xl transition border border-slate-800 hover:border-cyan-800/60"
@@ -82,10 +102,10 @@ export default function MarketplaceLandingPage() {
               Live Target Sandbox
             </Link>
             <Link
-              href="/studio"
+              href="/ide-bridge"
               className="bg-slate-900/60 hover:bg-slate-800 text-slate-300 font-semibold px-5 py-3 rounded-xl transition border border-slate-800"
             >
-              + Submit & Benchmark Tool
+              IDE Bridge (Cursor / Claude)
             </Link>
           </div>
         </div>

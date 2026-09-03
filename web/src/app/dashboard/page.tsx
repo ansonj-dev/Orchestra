@@ -40,7 +40,22 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchDashboardData();
     const interval = setInterval(fetchDashboardData, 4000);
-    return () => clearInterval(interval);
+
+    const handleExecuted = () => {
+      fetchDashboardData();
+    };
+    const handleRentalChanged = () => {
+      fetchDashboardData();
+    };
+
+    window.addEventListener('orchestra:tool-executed', handleExecuted);
+    window.addEventListener('orchestra:rental-changed', handleRentalChanged);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('orchestra:tool-executed', handleExecuted);
+      window.removeEventListener('orchestra:rental-changed', handleRentalChanged);
+    };
   }, []);
 
   const handleUpdateCap = async (toolName: string, hardCap: number) => {

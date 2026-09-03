@@ -38,28 +38,42 @@ export default function DemoTargetPage() {
   const triggerShopifyCheckoutTool = async () => {
     setExecutingTool('shopify_checkout_fast');
     try {
-      const res = await fetch('/api/deduct-credits', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          toolName: 'shopify_checkout_fast',
-          cost: 0.15,
-          caller: 'browser-webmcp'
-        })
-      });
-      const data = await res.json();
+      const payload = {
+        fullName: 'Marcus Vance',
+        email: 'marcus.vance@techcorp.io',
+        address: '742 Evergreen Terrace, Suite 400, Springfield, OR 97477'
+      };
 
-      if (!res.ok) {
-        alert(data.error || "Execution failed via Circuit Breaker.");
+      let data: any = null;
+      if (document.modelContext && typeof document.modelContext.executeTool === 'function') {
+        data = await document.modelContext.executeTool('execute_tool', {
+          toolName: 'shopify_checkout_fast',
+          parameters: payload
+        });
+      } else if (typeof window !== 'undefined' && window.__ORCHESTRA_WEBMCP__) {
+        data = await window.__ORCHESTRA_WEBMCP__.execute('execute_tool', {
+          toolName: 'shopify_checkout_fast',
+          parameters: payload
+        });
+      } else {
+        const res = await fetch('/api/deduct-credits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ toolName: 'shopify_checkout_fast', caller: 'browser-webmcp' })
+        });
+        data = await res.json();
+      }
+
+      if (!data || !data.success) {
+        alert(data?.error || "Execution failed via Circuit Breaker.");
         return;
       }
 
       // Smoothly populate DOM fields
-      setCustomerName('Marcus Vance');
-      setCustomerEmail('marcus.vance@techcorp.io');
-      setShippingAddress('742 Evergreen Terrace, Suite 400, Springfield, OR 97477');
+      setCustomerName(payload.fullName);
+      setCustomerEmail(payload.email);
+      setShippingAddress(payload.address);
       setCheckoutSuccess(true);
-      window.dispatchEvent(new CustomEvent('orchestra:tool-executed', { detail: data }));
     } catch (e: any) {
       alert(e.message);
     } finally {
@@ -71,19 +85,28 @@ export default function DemoTargetPage() {
   const triggerAnalyticsTableTool = async () => {
     setExecutingTool('extract_analytics_table');
     try {
-      const res = await fetch('/api/deduct-credits', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      let data: any = null;
+      if (document.modelContext && typeof document.modelContext.executeTool === 'function') {
+        data = await document.modelContext.executeTool('execute_tool', {
           toolName: 'extract_analytics_table',
-          cost: 0.08,
-          caller: 'browser-webmcp'
-        })
-      });
-      const data = await res.json();
+          parameters: { maxRows: 5 }
+        });
+      } else if (typeof window !== 'undefined' && window.__ORCHESTRA_WEBMCP__) {
+        data = await window.__ORCHESTRA_WEBMCP__.execute('execute_tool', {
+          toolName: 'extract_analytics_table',
+          parameters: { maxRows: 5 }
+        });
+      } else {
+        const res = await fetch('/api/deduct-credits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ toolName: 'extract_analytics_table', caller: 'browser-webmcp' })
+        });
+        data = await res.json();
+      }
 
-      if (!res.ok) {
-        alert(data.error || "Execution failed via Circuit Breaker.");
+      if (!data || !data.success) {
+        alert(data?.error || "Execution failed via Circuit Breaker.");
         return;
       }
 
@@ -94,8 +117,7 @@ export default function DemoTargetPage() {
         { service: "model-context-tunnel", endpoint: "/api/mcp", p99: "31ms", errors: "0.04%", status: "HEALTHY" }
       ];
 
-      setExtractedData(rows);
-      window.dispatchEvent(new CustomEvent('orchestra:tool-executed', { detail: data }));
+      setExtractedData(data.executionResult?.extractedData || rows);
     } catch (e: any) {
       alert(e.message);
     } finally {
@@ -107,24 +129,33 @@ export default function DemoTargetPage() {
   const triggerMarginEditorTool = async () => {
     setExecutingTool('margin_context_editor');
     try {
-      const res = await fetch('/api/deduct-credits', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const patch = `Validated origin isolation boundaries. Latency 18ms. WebMCP imperative execution verified.`;
+      let data: any = null;
+      if (document.modelContext && typeof document.modelContext.executeTool === 'function') {
+        data = await document.modelContext.executeTool('execute_tool', {
           toolName: 'margin_context_editor',
-          cost: 0.10,
-          caller: 'browser-webmcp'
-        })
-      });
-      const data = await res.json();
+          parameters: { patchContent: patch }
+        });
+      } else if (typeof window !== 'undefined' && window.__ORCHESTRA_WEBMCP__) {
+        data = await window.__ORCHESTRA_WEBMCP__.execute('execute_tool', {
+          toolName: 'margin_context_editor',
+          parameters: { patchContent: patch }
+        });
+      } else {
+        const res = await fetch('/api/deduct-credits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ toolName: 'margin_context_editor', caller: 'browser-webmcp' })
+        });
+        data = await res.json();
+      }
 
-      if (!res.ok) {
-        alert(data.error || "Execution failed via Circuit Breaker.");
+      if (!data || !data.success) {
+        alert(data?.error || "Execution failed via Circuit Breaker.");
         return;
       }
 
-      setDocContent(prev => prev + `\n\n> [WebMCP Patch Injected at ${new Date().toLocaleTimeString()}]: Validated origin isolation boundaries. Latency 18ms. 0.10 CR deducted.`);
-      window.dispatchEvent(new CustomEvent('orchestra:tool-executed', { detail: data }));
+      setDocContent(prev => prev + `\n\n> [WebMCP Patch Injected at ${new Date().toLocaleTimeString()}]: ${patch}`);
     } catch (e: any) {
       alert(e.message);
     } finally {

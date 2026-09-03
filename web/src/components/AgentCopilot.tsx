@@ -57,74 +57,78 @@ export default function AgentCopilot() {
       { id: '1', label: '1. Human Intent & Schema Planning', status: 'running', detail: 'Parsing request and inspecting document.modelContext...' }
     ]);
 
-    await new Promise(r => setTimeout(r, 450));
+    await new Promise(r => setTimeout(r, 300));
 
     setSteps(prev => [
-      { ...prev[0], status: 'completed', detail: `Selected tool: ${targetTool} (mcp_id)` },
-      { id: '2', label: '2. Pre-Flight Credit Verification & Hard Cap Check', status: 'running', detail: `Validating user wallet balance for -${cost} CR...` }
+      { ...prev[0], status: 'completed', detail: `Selected WebMCP Tool: ${targetTool}` },
+      { id: '2', label: '2. WebMCP Imperative Invocation & Credit Verification', status: 'running', detail: `Executing document.modelContext.executeTool('execute_tool', ...)` }
     ]);
 
-    // Step 2: Atomic Deduction
-    let deductionRes: any = null;
+    // Step 2 & 3: Real WebMCP Tool Invocation
+    let webmcpResult: any = null;
     try {
-      const res = await fetch('/api/deduct-credits', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      if (document.modelContext && typeof document.modelContext.executeTool === 'function') {
+        webmcpResult = await document.modelContext.executeTool('execute_tool', {
           toolName: targetTool,
-          cost,
-          caller: 'browser-webmcp',
-          metadata: { copilotIntent: queryText }
-        })
-      });
-      deductionRes = await res.json();
+          parameters: payloadArgs
+        });
+      } else if (typeof window !== 'undefined' && window.__ORCHESTRA_WEBMCP__) {
+        webmcpResult = await window.__ORCHESTRA_WEBMCP__.execute('execute_tool', {
+          toolName: targetTool,
+          parameters: payloadArgs
+        });
+      } else {
+        // Direct fetch fallback if runtime not yet attached
+        const res = await fetch('/api/deduct-credits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            toolName: targetTool,
+            caller: 'browser-webmcp',
+            metadata: { copilotIntent: queryText }
+          })
+        });
+        webmcpResult = await res.json();
+      }
 
-      if (!res.ok) {
+      if (!webmcpResult || !webmcpResult.success) {
+        const errorMsg = webmcpResult?.error || "Circuit Breaker Triggered: Insufficient Credits";
         setSteps(prev => [
           prev[0],
-          { ...prev[1], status: 'failed', detail: deductionRes.error || "Circuit Breaker Triggered: Insufficient Credits" }
+          { ...prev[1], status: 'failed', detail: errorMsg }
         ]);
         setFinalMessage("Execution halted by Orchestra Circuit Breaker.");
         setIsProcessing(false);
         return;
       }
     } catch (e: any) {
-      // Fallback
+      setSteps(prev => [
+        prev[0],
+        { ...prev[1], status: 'failed', detail: e.message }
+      ]);
+      setFinalMessage("Error invoking WebMCP: " + e.message);
+      setIsProcessing(false);
+      return;
     }
 
-    await new Promise(r => setTimeout(r, 400));
+    const deducted = webmcpResult.creditsDeducted ?? cost;
+    const remaining = webmcpResult.remainingBalance?.toFixed(2) ?? '99.85';
 
-    // Step 3: DOM Session Execution
     setSteps(prev => [
       prev[0],
-      { ...prev[1], status: 'completed', detail: `Ledger Mutation: -${cost} CR (Remaining: ${deductionRes?.remainingBalance?.toFixed(2) ?? '99.85'} CR)` },
-      { id: '3', label: '3. Browser DOM Session Execution (MAIN World)', status: 'running', detail: 'Executing registered JavaScript callback inside active tab...' }
+      { ...prev[1], status: 'completed', detail: `WebMCP Mutation: -${deducted} CR (Remaining: ${remaining} CR)` },
+      { id: '3', label: '3. Browser DOM Session Execution (MAIN World)', status: 'running', detail: 'Local DOM operation verified with zero credential leaks...' }
     ]);
 
-    await new Promise(r => setTimeout(r, 550));
-
-    // Trigger DOM updates if on demo page
-    if (targetTool === 'shopify_checkout_fast') {
-      const nameInput = document.querySelector('input[name="fullName"], #customer-name') as HTMLInputElement;
-      const emailInput = document.querySelector('input[name="email"], #customer-email') as HTMLInputElement;
-      const addrInput = document.querySelector('input[name="address"], #shipping-address') as HTMLInputElement;
-      if (nameInput) nameInput.value = payloadArgs.fullName;
-      if (emailInput) emailInput.value = payloadArgs.email;
-      if (addrInput) addrInput.value = payloadArgs.address;
-    } else if (targetTool === 'margin_context_editor') {
-      const editor = document.querySelector('#document-canvas, textarea') as HTMLTextAreaElement;
-      if (editor) editor.value += `\n\n[Co-Pilot Autonomous Patch]: ${payloadArgs.patchContent}`;
-    }
-
-    window.dispatchEvent(new CustomEvent('orchestra:tool-executed', { detail: deductionRes || { toolName: targetTool, cost } }));
+    await new Promise(r => setTimeout(r, 300));
 
     setSteps(prev => [
       prev[0],
       prev[1],
-      { ...prev[2], status: 'completed', detail: 'DOM fields synced, origin isolation preserved, output rendered.' }
+      { ...prev[2], status: 'completed', detail: `Executed via document.modelContext. Target fields and state synchronized.` }
     ]);
 
-    setFinalMessage(`✓ Successfully orchestrated '${targetTool}'. Verified local outcome achieved with zero backend token leaks.`);
+    setFinalMessage(`✓ Successfully executed '${targetTool}' through WebMCP. Outcome achieved with zero backend token leaks.`);
     setIsProcessing(false);
   };
 

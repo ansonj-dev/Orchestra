@@ -252,7 +252,7 @@ export class OrchestraLedger {
     caller?: ExecutionTransaction['caller'];
   }): Promise<{ success: boolean; remainingBalance: number; deducted: number; circuitBreakerTriggered?: boolean; error?: string }> {
     const tool = this.getAllTools().find(t => t.tool_name === params.toolName);
-    const cost = params.cost ?? tool?.cost ?? 0.10;
+    const cost = tool ? tool.cost : 0.10;
     const caller = params.caller ?? 'browser-webmcp';
 
     if (isDbAvailable()) {
@@ -281,7 +281,7 @@ export class OrchestraLedger {
     metadata?: Record<string, any>;
   }): { success: boolean; remainingBalance: number; deducted: number; circuitBreakerTriggered?: boolean; error?: string } {
     const tool = this.getAllTools().find(t => t.tool_name === params.toolName);
-    const cost = params.cost ?? tool?.cost ?? 0.10;
+    const cost = tool ? tool.cost : 0.10;
 
     if (memoryLedger.balance < cost || memoryLedger.balance <= 0) {
       memoryLedger.transactions.unshift({

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import WebMCPRuntimeProvider from "@/components/WebMCPRuntimeProvider";
 
 export const metadata: Metadata = {
   title: "Orchestra | Client-Side Agent Utility Marketplace & Credit Runtime",
@@ -16,6 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark bg-slate-950 text-slate-100 antialiased selection:bg-cyan-500/30 selection:text-white">
       <body className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+        <WebMCPRuntimeProvider />
         <Navbar />
         <div className="flex-1">
           {children}

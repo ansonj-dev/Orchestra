@@ -30,16 +30,34 @@ export default function ToolCard({
     )
   );
 
+  React.useEffect(() => {
+    const handleRentalChanged = (e: any) => {
+      if (e.detail?.toolName === tool.tool_name) {
+        setIsRented(e.detail.isRented);
+      }
+    };
+    window.addEventListener('orchestra:rental-changed', handleRentalChanged);
+    return () => window.removeEventListener('orchestra:rental-changed', handleRentalChanged);
+  }, [tool.tool_name]);
+
   const handleToggle = async () => {
     setToggling(true);
     try {
-      const res = await fetch('/api/tools', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'toggle-rental', toolName: tool.tool_name })
-      });
-      const data = await res.json();
-      if (data.success) {
+      let data: any = null;
+      if (document.modelContext && typeof document.modelContext.executeTool === 'function') {
+        data = await document.modelContext.executeTool('rent_tool', { toolName: tool.tool_name });
+      } else if (typeof window !== 'undefined' && window.__ORCHESTRA_WEBMCP__) {
+        data = await window.__ORCHESTRA_WEBMCP__.execute('rent_tool', { toolName: tool.tool_name });
+      } else {
+        const res = await fetch('/api/tools', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'toggle-rental', toolName: tool.tool_name })
+        });
+        data = await res.json();
+      }
+
+      if (data && data.success) {
         setIsRented(data.isRented);
         onRentalToggled(tool.tool_name, data.isRented);
       }
@@ -63,42 +81,48 @@ export default function ToolCard({
         return;
       }
 
-      // Call the deduction API
-      const res = await fetch('/api/deduct-credits', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // Execute via the official document.modelContext WebMCP interface
+      let data: any = null;
+      if (document.modelContext && typeof document.modelContext.executeTool === 'function') {
+        data = await document.modelContext.executeTool('execute_tool', {
           toolName: tool.tool_name,
-          cost: tool.cost,
-          caller: 'browser-webmcp',
-          metadata: { testRunner: true, args: parsedArgs }
-        })
-      });
-
-      const data = await res.json();
-      
-      if (!res.ok) {
-        setExecResult({
-          status: "CIRCUIT_BREAKER_BLOCKED",
-          httpCode: res.status,
-          error: data.error,
-          remainingBalance: data.remainingBalance
+          parameters: parsedArgs
+        });
+      } else if (typeof window !== 'undefined' && window.__ORCHESTRA_WEBMCP__) {
+        data = await window.__ORCHESTRA_WEBMCP__.execute('execute_tool', {
+          toolName: tool.tool_name,
+          parameters: parsedArgs
         });
       } else {
-        const simulatedOutput = {
-          status: "SUCCESS_EXECUTED",
+        const res = await fetch('/api/deduct-credits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            toolName: tool.tool_name,
+            caller: 'browser-webmcp',
+            metadata: { testRunner: true, args: parsedArgs }
+          })
+        });
+        data = await res.json();
+      }
+      
+      if (!data || !data.success) {
+        setExecResult({
+          status: "CIRCUIT_BREAKER_BLOCKED",
+          error: data?.error || "Execution blocked by circuit breaker",
+          remainingBalance: data?.remainingBalance
+        });
+      } else {
+        const output = {
+          status: "SUCCESS_WEBMCP_INVOKED",
           tool: tool.tool_name,
-          deductedCredits: data.deducted,
+          deductedCredits: data.creditsDeducted ?? tool.cost,
           remainingBalance: data.remainingBalance,
-          output: {
-            message: `Task executed safely inside active DOM session at ${window.location.hostname}`,
-            targetParams: parsedArgs,
-            runtimeBound: "document.modelContext (MAIN World)"
-          }
+          runtimeBound: "document.modelContext (Chrome WebMCP Standard)",
+          result: data.executionResult || data
         };
-        setExecResult(simulatedOutput);
-        window.dispatchEvent(new CustomEvent('orchestra:tool-executed', { detail: data }));
-        if (onExecutionCompleted) onExecutionCompleted(tool.tool_name, simulatedOutput);
+        setExecResult(output);
+        if (onExecutionCompleted) onExecutionCompleted(tool.tool_name, output);
       }
     } catch (err: any) {
       setExecResult({ error: err.message });

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import WalletModal from './WalletModal';
+import { getWebMCPStatus, WebMCPStatusInfo } from '@/lib/webmcp';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -11,6 +12,13 @@ export default function Navbar() {
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
+  const [webmcpStatus, setWebmcpStatus] = useState<WebMCPStatusInfo>({
+    isSupported: false,
+    isNative: false,
+    source: 'Unavailable',
+    registeredToolsCount: 0,
+    toolNames: []
+  });
 
   const fetchBalance = async () => {
     try {
@@ -28,6 +36,13 @@ export default function Navbar() {
     fetchBalance();
     const interval = setInterval(fetchBalance, 3000);
 
+    const updateStatus = () => {
+      setWebmcpStatus(getWebMCPStatus());
+    };
+
+    updateStatus();
+    const statusInterval = setInterval(updateStatus, 1500);
+
     const handleExecuted = (e: any) => {
       if (e.detail?.remainingBalance !== undefined) {
         setBalance(e.detail.remainingBalance);
@@ -37,9 +52,13 @@ export default function Navbar() {
     };
 
     window.addEventListener('orchestra:tool-executed', handleExecuted);
+    window.addEventListener('webmcp:tool-registered', updateStatus);
+
     return () => {
       clearInterval(interval);
+      clearInterval(statusInterval);
       window.removeEventListener('orchestra:tool-executed', handleExecuted);
+      window.removeEventListener('webmcp:tool-registered', updateStatus);
     };
   }, []);
 
@@ -120,9 +139,27 @@ export default function Navbar() {
             </nav>
           </div>
 
-          {/* Right Area: Extension Sync + Wallet Indicator */}
-          <div className="flex items-center space-x-3 sm:space-x-4">
+          {/* Right Area: WebMCP Indicator + Extension Sync + Wallet Indicator */}
+          <div className="flex items-center space-x-2 sm:space-x-3">
             
+            {/* WebMCP Engine Status Pill */}
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('orchestra:open-webmcp-inspector'));
+                }
+              }}
+              title="Click to view WebMCP status, registered tools, and live invocation inspector"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 text-xs font-mono transition-all group"
+            >
+              <span className={`h-2 w-2 rounded-full ${webmcpStatus.isNative ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]' : 'bg-cyan-400 shadow-[0_0_8px_#22d3ee]'} animate-pulse`}></span>
+              <span className="hidden sm:inline text-slate-400 font-sans">WebMCP:</span>
+              <span className="font-bold">{webmcpStatus.isNative ? 'Native' : 'Connected'}</span>
+              <span className="text-[10px] bg-slate-800 text-cyan-300 px-1.5 py-0.5 rounded font-mono font-semibold">
+                {webmcpStatus.registeredToolsCount || 5} Tools
+              </span>
+            </button>
+
             {/* Sync Extension Pill */}
             <button
               onClick={syncExtension}
@@ -130,7 +167,7 @@ export default function Navbar() {
               className="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-300 hover:border-cyan-800/50 text-xs font-mono transition-all"
             >
               <span className={`h-1.5 w-1.5 rounded-full ${syncStatus ? 'bg-cyan-400 animate-ping' : 'bg-slate-500'}`}></span>
-              <span>{syncStatus || 'Sync Runtime'}</span>
+              <span>{syncStatus || 'Sync'}</span>
             </button>
 
             {/* Wallet Balance Pill */}
