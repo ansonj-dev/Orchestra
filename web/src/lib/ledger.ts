@@ -3,7 +3,7 @@
 
 import { WebMCPTool, ExecutionTransaction } from '../types';
 import { SAMPLE_TOOLS } from './sample-tools';
-import { getPool } from './db';
+import { getPool, ensureDatabaseSchema } from './db';
 
 export interface LedgerState {
   balance: number;
@@ -48,22 +48,29 @@ function isDbAvailable(): boolean {
 // ─── DB Helpers ──────────────────────────────────────────────────────────────
 
 async function dbGetBalance(): Promise<number> {
-  const pool = getPool()!;
-  const { rows } = await pool.query(
-    'SELECT credits_balance FROM profiles WHERE id = $1',
-    [DEMO_USER_ID]
-  );
-  if (rows.length === 0) {
-    // Seed the demo user
-    await pool.query(
-      `INSERT INTO profiles (id, email, full_name, credits_balance)
-       VALUES ($1, 'demo@orchestra.app', 'Orchestra Demo', 100.00)
-       ON CONFLICT (id) DO NOTHING`,
+  try {
+    const pool = getPool();
+    if (!pool) return memoryLedger.balance;
+    await ensureDatabaseSchema();
+    const { rows } = await pool.query(
+      'SELECT credits_balance FROM profiles WHERE id = $1',
       [DEMO_USER_ID]
     );
-    return 100.00;
+    if (rows.length === 0) {
+      // Seed the demo user
+      await pool.query(
+        `INSERT INTO profiles (id, email, full_name, credits_balance)
+         VALUES ($1, 'demo@orchestra.app', 'Orchestra Demo', 100.00)
+         ON CONFLICT (id) DO NOTHING`,
+        [DEMO_USER_ID]
+      );
+      return 100.00;
+    }
+    return parseFloat(rows[0].credits_balance);
+  } catch (err: any) {
+    console.error('[Orchestra Ledger] DB getBalance error, falling back to memory:', err.message);
+    return memoryLedger.balance;
   }
-  return parseFloat(rows[0].credits_balance);
 }
 
 async function dbDeduct(cost: number, toolName: string, toolTitle: string | undefined, caller: string): Promise<{ success: boolean; remainingBalance: number; error?: string }> {
@@ -137,12 +144,29 @@ async function dbGetTransactions(limit = 25): Promise<ExecutionTransaction[]> {
 }
 
 async function dbRefill(amount: number): Promise<number> {
-  const pool = getPool()!;
-  const { rows } = await pool.query(
-    'UPDATE profiles SET credits_balance = credits_balance + $1, updated_at = NOW() WHERE id = $2 RETURNING credits_balance',
-    [amount, DEMO_USER_ID]
-  );
-  return parseFloat(rows[0].credits_balance);
+  try {
+    const pool = getPool();
+    if (!pool) throw new Error('No DB pool');
+    await ensureDatabaseSchema();
+    const { rows } = await pool.query(
+      'UPDATE profiles SET credits_balance = credits_balance + $1, updated_at = NOW() WHERE id = $2 RETURNING credits_balance',
+      [amount, DEMO_USER_ID]
+    );
+    if (rows.length === 0) {
+      await pool.query(
+        `INSERT INTO profiles (id, email, full_name, credits_balance)
+         VALUES ($1, 'demo@orchestra.app', 'Orchestra Demo', $2)
+         ON CONFLICT (id) DO NOTHING`,
+        [DEMO_USER_ID, 100.00 + amount]
+      );
+      return 100.00 + amount;
+    }
+    return parseFloat(rows[0].credits_balance);
+  } catch (err: any) {
+    console.error('[Orchestra Ledger] DB refill error, falling back to memory:', err.message);
+    memoryLedger.balance = parseFloat((memoryLedger.balance + amount).toFixed(4));
+    return memoryLedger.balance;
+  }
 }
 
 // ─── OrchestraLedger (Public API) ────────────────────────────────────────────
