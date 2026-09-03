@@ -2,7 +2,9 @@
 // Runs inside the active webpage tab DOM session, registering verified WebMCP tools.
 
 (function() {
-  const MARKETPLACE_API_URL = "http://localhost:3000";
+  const MARKETPLACE_API_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? 'http://localhost:3000'
+    : 'https://orchestra-web-gmvv.onrender.com';
   let injectedToolNames = new Set();
 
   console.log("%c[Orchestra.WebMCP]%c Content Script Initialized in MAIN World", "color:#06b6d4;font-weight:bold;", "color:inherit;");
