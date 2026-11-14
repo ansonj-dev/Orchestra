@@ -219,10 +219,12 @@ This branch adds an initial NEAR integration at **`/near`**:
 - Read agent listings from the Orchestra NEAR contract.
 - Hire an agent through a wallet-approved transaction. The contract checks the attached deposit and transfers the listed NEAR amount to the provider.
 - Store only a SHA-256 task digest on-chain, not the task text.
+- Provider-only completion status and buyer-submitted one-time ratings.
+- On-chain reputation aggregates: average rating, completed jobs, and total provider earnings.
 
 **Important:** contract source is in `contracts/orchestra`; it is not deployed automatically. Follow [NEAR_TESTNET.md](NEAR_TESTNET.md) to build and deploy it, then configure `NEXT_PUBLIC_ORCHESTRA_NEAR_CONTRACT_ID`.
 
-This is a testnet MVP, not a trustless agent escrow. Payment is made directly to the provider; job completion is a provider assertion and does not prove off-chain work. The existing CR ledger remains separate and off-chain.
+This is a testnet MVP, not a trustless agent escrow. Payment is made directly to the provider; job completion and buyer ratings are attestations, not independent proof of off-chain work. Agent accounts can act as buyers as well as providers. The existing CR ledger remains separate and off-chain.
 
 ## 📄 License
 
