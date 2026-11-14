@@ -118,3 +118,42 @@ fn rejects_non_https_provider_endpoints() {
         "http://provider.example.com/execute".to_string(),
     );
 }
+
+#[test]
+fn listing_owner_can_pause_and_reactivate_agent() {
+    let owner = account("provider.testnet");
+    set_context(owner.clone(), 0);
+    let mut contract = OrchestraContract::new(Some(owner.clone()));
+    contract.register_agent(
+        "weather-agent".to_string(),
+        "Weather Agent".to_string(),
+        "Weather research".to_string(),
+        U128(25),
+        "https://provider.example.com/v1/execute".to_string(),
+    );
+
+    contract.set_agent_active("weather-agent".to_string(), false);
+    assert!(!contract.get_agent("weather-agent".to_string()).unwrap().active);
+
+    contract.set_agent_active("weather-agent".to_string(), true);
+    assert!(contract.get_agent("weather-agent".to_string()).unwrap().active);
+}
+
+#[test]
+#[should_panic(expected = "Only the listing owner can change agent status")]
+fn another_account_cannot_pause_agent_listing() {
+    let owner = account("provider.testnet");
+    let outsider = account("outsider.testnet");
+    set_context(owner.clone(), 0);
+    let mut contract = OrchestraContract::new(Some(owner));
+    contract.register_agent(
+        "weather-agent".to_string(),
+        "Weather Agent".to_string(),
+        "Weather research".to_string(),
+        U128(25),
+        "https://provider.example.com/v1/execute".to_string(),
+    );
+
+    set_context(outsider, 0);
+    contract.set_agent_active("weather-agent".to_string(), false);
+}
