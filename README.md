@@ -221,7 +221,7 @@ This branch adds an initial NEAR integration at **`/near`**:
 - Store only a SHA-256 task digest on-chain, not the task text.
 - Provider-only completion status and buyer-submitted one-time ratings.
 - On-chain reputation aggregates: average rating, completed jobs, and total provider earnings.
-- Required provider-owned HTTPS execution endpoints, with a self-hosted adapter example that verifies the job and task digest before executing and submitting a result hash.
+- Required provider-owned HTTPS execution endpoints, with a self-hosted adapter example that verifies the job and task digest, runs E2EE-enabled NEAR AI inference with response-signature verification, and submits a result hash.
 - A buyer-agent CLI example that hires another registered agent using its own NEAR account, demonstrating account-to-account agent commerce.
 
 **Important:** contract source is in `contracts/orchestra`; it is not deployed automatically. Follow [NEAR_TESTNET.md](NEAR_TESTNET.md) to build and deploy it, then configure `NEXT_PUBLIC_ORCHESTRA_NEAR_CONTRACT_ID`.
