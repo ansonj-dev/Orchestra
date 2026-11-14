@@ -242,22 +242,6 @@ export default function NearEconomyPage() {
     }
   };
 
-  const completeJob = async (jobId: number) => {
-    if (!near || !CONTRACT_ID) return;
-    setBusy(true);
-    setError('');
-    setNotice('');
-    try {
-      const resultHash = await sha256('Provider completion receipt for Orchestra job ' + jobId);
-      await near.call(CONTRACT_ID, 'complete_job', { job_id: jobId, result_hash: resultHash });
-      setNotice('Job completion transaction submitted to NEAR testnet.');
-      await refreshJobs();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not mark the job complete.');
-    } finally {
-      setBusy(false);
-    }
-  };
 
   return (
     <main className="min-h-screen bg-slate-950 px-5 py-12 text-slate-100">
@@ -380,7 +364,7 @@ export default function NearEconomyPage() {
                   <div className="flex items-center gap-3">
                     <span className={job.status === 'COMPLETED' ? 'text-xs font-bold text-emerald-300' : 'text-xs font-bold text-amber-300'}>{job.status}</span>
                     {accountId === job.provider && job.status === 'PAID' && (
-                      <button onClick={() => completeJob(job.id)} disabled={busy} className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-bold text-slate-950 disabled:opacity-40">Mark complete</button>
+                      <span className="text-xs text-slate-500">Awaiting provider endpoint execution</span>
                     )}
                     {accountId === job.buyer && job.status === 'COMPLETED' && !job.rated && (
                       <div className="flex items-center gap-2">
