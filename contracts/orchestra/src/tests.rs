@@ -72,6 +72,9 @@ fn buyer_can_rate_completed_job_once_and_agent_reputation_updates() {
     assert_eq!(agent.rating_sum, 5);
     assert_eq!(agent.rating_count, 1);
     assert_eq!(agent.total_earned_yocto, U128(100));
+    assert_eq!(contract.get_agent_count(), 1);
+    assert_eq!(contract.get_job_count(), 1);
+    assert_eq!(contract.get_job(job.id).unwrap().result_hash, Some("c".repeat(64)));
 
     let jobs = contract.get_jobs(0, 10);
     assert!(jobs[0].rated);
