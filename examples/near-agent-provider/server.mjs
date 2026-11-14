@@ -6,7 +6,6 @@ const required = [
   'NEAR_AGENT_PRIVATE_KEY',
   'NEAR_AGENT_ACCOUNT_ID',
   'ORCHESTRA_NEAR_CONTRACT_ID',
-  'AGENT_EXECUTOR_URL',
 ];
 for (const key of required) {
   if (!process.env[key]) throw new Error('Missing required environment variable: ' + key);
@@ -14,10 +13,15 @@ for (const key of required) {
 
 const accountId = process.env.NEAR_AGENT_ACCOUNT_ID;
 const contractId = process.env.ORCHESTRA_NEAR_CONTRACT_ID;
-const executorUrl = new URL(process.env.AGENT_EXECUTOR_URL);
-if (executorUrl.protocol !== 'https:') {
+const executorUrl = process.env.AGENT_EXECUTOR_URL ? new URL(process.env.AGENT_EXECUTOR_URL) : null;
+if (executorUrl && executorUrl.protocol !== 'https:') {
   throw new Error('AGENT_EXECUTOR_URL must use HTTPS.');
 }
+if (!executorUrl && !process.env.NEARAI_API_KEY) {
+  throw new Error('Set NEARAI_API_KEY for the built-in NEAR AI Cloud executor, or configure AGENT_EXECUTOR_URL for a custom executor.');
+}
+const nearAiBaseUrl = (process.env.NEARAI_BASE_URL || 'https://cloud-api.near.ai/v1').replace(/\/$/, '');
+const nearAiModel = process.env.NEARAI_MODEL || 'zai-org/GLM-5.1-FP8';
 const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
 const near = new Near({
   network: 'testnet',
@@ -87,24 +91,48 @@ async function handleExecute(req, res) {
     }
     activeJobs.add(jobId);
     try {
-      // The provider controls this executor. Its API key stays on the provider's server.
-      const upstream = await fetch(executorUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(process.env.AGENT_EXECUTOR_TOKEN
-          ? { Authorization: 'Bearer ' + process.env.AGENT_EXECUTOR_TOKEN }
-          : {}),
-      },
-      body: JSON.stringify({
-        task,
-        job_id: jobId,
-        agent_id: agentId,
-        agent_account_id: accountId,
-        contract_id: contractId,
-      }),
-      signal: AbortSignal.timeout(45_000),
-    });
+      // Prefer a provider-owned executor when configured; otherwise use NEAR AI Cloud directly.
+      const upstream = executorUrl
+        ? await fetch(executorUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(process.env.AGENT_EXECUTOR_TOKEN
+                ? { Authorization: 'Bearer ' + process.env.AGENT_EXECUTOR_TOKEN }
+                : {}),
+            },
+            body: JSON.stringify({
+              task,
+              job_id: jobId,
+              agent_id: agentId,
+              agent_account_id: accountId,
+              contract_id: contractId,
+            }),
+            signal: AbortSignal.timeout(45_000),
+          })
+        : await fetch(nearAiBaseUrl + '/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer ' + process.env.NEARAI_API_KEY,
+            },
+            body: JSON.stringify({
+              model: nearAiModel,
+              temperature: 0.2,
+              max_tokens: 1600,
+              messages: [
+                {
+                  role: 'system',
+                  content: 'You are an autonomous specialist agent hired through Orchestra. Complete the buyer task accurately. Be explicit about uncertainty. Do not claim to have performed external actions unless you actually did them. Return a useful, structured answer.',
+                },
+                {
+                  role: 'user',
+                  content: task,
+                },
+              ],
+            }),
+            signal: AbortSignal.timeout(45_000),
+          });
 
       const upstreamText = await upstream.text();
       if (Buffer.byteLength(upstreamText, 'utf8') > 100_000) {
@@ -117,8 +145,23 @@ async function handleExecute(req, res) {
 
       let result;
       try {
-        result = JSON.parse(upstreamText);
-      } catch {
+        const payload = JSON.parse(upstreamText);
+        if (executorUrl) {
+          result = payload;
+        } else {
+          const output = payload?.choices?.[0]?.message?.content;
+          if (typeof output !== 'string' || !output.trim()) {
+            throw new Error('NEAR AI Cloud returned no assistant content.');
+          }
+          result = {
+            provider: 'NEAR AI Cloud',
+            model: payload.model || nearAiModel,
+            output,
+            usage: payload.usage || null,
+          };
+        }
+      } catch (error) {
+        if (!executorUrl) throw error;
         result = { output: upstreamText };
       }
       const resultHash = sha256(JSON.stringify(result));
