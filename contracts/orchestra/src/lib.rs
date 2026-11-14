@@ -200,6 +200,10 @@ impl OrchestraContract {
         (start..end).filter_map(|index| self.jobs.get(index)).collect()
     }
 
+    pub fn get_agent_count(&self) -> u64 { self.agent_ids.len() }
+
+    pub fn get_job_count(&self) -> u64 { self.jobs.len() }
+
     pub fn get_owner(&self) -> AccountId { self.owner.clone() }
 
     fn validate_agent_id(agent_id: String) -> String {
