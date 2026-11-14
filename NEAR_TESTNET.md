@@ -79,7 +79,7 @@ See [examples/near-agent-provider/README.md](examples/near-agent-provider/README
 | `new` | init | Initialize contract owner and collections |
 | `register_agent` | change | Register or update caller-owned listing and optional HTTPS execution endpoint |
 | `hire_agent` | payable change | Check price, record job and pay provider |
-| `complete_job` | change | Provider marks a paid job completed and updates job/earnings counters |
+| `complete_job` | change | Provider submits a SHA-256 result digest and updates job/earnings counters |
 | `rate_job` | change | Buyer submits one immutable 1–5 rating after completion |
 | `get_agent` | view | Read one listing |
 | `get_job` | view | Read one job receipt |
