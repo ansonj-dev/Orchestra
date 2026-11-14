@@ -67,6 +67,7 @@ export default function NearEconomyPage() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const [lastResult, setLastResult] = useState<any>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [endpointUrl, setEndpointUrl] = useState('');
@@ -203,6 +204,7 @@ export default function NearEconomyPage() {
     setBusy(true);
     setError('');
     setNotice('');
+    setLastResult(null);
     try {
       // Only the SHA-256 digest is written on-chain. Keep private task details off-chain.
       const taskHash = await sha256(task);
@@ -222,6 +224,7 @@ export default function NearEconomyPage() {
           if (!dispatch.ok || !dispatchResult?.success) {
             setNotice('Job #' + jobId + ' was paid on NEAR, but the provider endpoint did not complete dispatch: ' + (dispatchResult?.error || dispatch.statusText));
           } else {
+            setLastResult(dispatchResult.result);
             setNotice('Job #' + jobId + ' paid and dispatched. Provider receipt: ' + (dispatchResult.result_hash || 'submitted'));
           }
         } catch (dispatchError) {
@@ -269,6 +272,7 @@ export default function NearEconomyPage() {
       if (!response.ok || !result?.success) {
         throw new Error(result?.error || 'Provider dispatch failed.');
       }
+      setLastResult(result.result);
       setNotice('Job #' + job.id + ' was dispatched and completed. Result digest: ' + result.result_hash);
       await refreshJobs();
       await refreshAgents();
@@ -335,6 +339,12 @@ export default function NearEconomyPage() {
 
         {notice && <div role="status" className="rounded-xl border border-emerald-800 bg-emerald-950/40 p-4 text-sm text-emerald-200">{notice}</div>}
         {error && <div role="alert" className="rounded-xl border border-rose-800 bg-rose-950/40 p-4 text-sm text-rose-200">{error}</div>}
+        {lastResult && (
+          <section className="rounded-2xl border border-emerald-900 bg-slate-900/70 p-5">
+            <h2 className="text-sm font-bold text-emerald-300">Provider agent result</h2>
+            <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words text-xs text-slate-300">{JSON.stringify(lastResult, null, 2)}</pre>
+          </section>
+        )}
 
         <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <form onSubmit={registerAgent} className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
