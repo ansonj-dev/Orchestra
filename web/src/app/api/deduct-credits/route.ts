@@ -5,6 +5,13 @@ import { OrchestraLedger } from '@/lib/ledger';
 
 export async function POST(request: Request) {
   try {
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json(
+        { success: false, error: 'Billing is disabled until authenticated per-user sessions are configured. No credits were charged.' },
+        { status: 503 }
+      );
+    }
+
     const body = await request.json();
     const { toolName, cost, caller, metadata } = body;
 
