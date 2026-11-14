@@ -116,6 +116,8 @@ export default function NearEconomyPage() {
           if (!active) return;
           const id = event?.accounts?.[0]?.accountId || event?.accountId || '';
           setAccountId(id);
+          setEndpointHealthy(false);
+          setEndpointStatus('');
           setNear(new Near({ network: 'testnet', wallet: fromHotConnect(instance) }));
           setNotice(id ? 'Connected: ' + id : 'NEAR wallet connected.');
           setError('');
@@ -123,6 +125,8 @@ export default function NearEconomyPage() {
         instance.on('wallet:signOut', () => {
           if (!active) return;
           setAccountId('');
+          setEndpointHealthy(false);
+          setEndpointStatus('');
           setNear(new Near({ network: 'testnet' }));
           setNotice('Wallet disconnected.');
         });
@@ -137,6 +141,8 @@ export default function NearEconomyPage() {
         if (active) {
           if (restoredAccountId) {
             setAccountId(restoredAccountId);
+            setEndpointHealthy(false);
+            setEndpointStatus('');
             setNear(new Near({ network: 'testnet', wallet: fromHotConnect(instance) }));
           } else {
             setNear(new Near({ network: 'testnet' }));
