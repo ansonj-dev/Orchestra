@@ -20,6 +20,7 @@ pub struct Agent {
     pub owner: AccountId,
     pub name: String,
     pub description: String,
+    pub endpoint_url: String,
     pub price_yocto: U128,
     pub active: bool,
     pub registered_at: u64,
@@ -37,6 +38,7 @@ pub struct Job {
     pub buyer: AccountId,
     pub provider: AccountId,
     pub task_hash: String,
+    pub result_hash: Option<String>,
     pub price_yocto: U128,
     pub status: String,
     pub created_at: u64,
@@ -66,11 +68,13 @@ impl OrchestraContract {
     }
 
     /// Register or update the caller's agent listing. The caller owns the listing.
-    pub fn register_agent(&mut self, agent_id: String, name: String, description: String, price_yocto: U128) {
+    pub fn register_agent(&mut self, agent_id: String, name: String, description: String, price_yocto: U128, endpoint_url: String) {
         let caller = env::predecessor_account_id();
         let agent_id = Self::validate_agent_id(agent_id);
         require!(!name.trim().is_empty() && name.len() <= 80, "Invalid agent name");
         require!(description.len() <= 500, "Description too long");
+        require!(endpoint_url.len() <= 300, "Agent endpoint URL too long");
+        require!(endpoint_url.is_empty() || endpoint_url.starts_with("https://"), "Agent endpoint must use HTTPS");
         require!(price_yocto.0 > 0, "Price must be greater than zero");
 
         if let Some(existing) = self.agents.get(&agent_id) {
@@ -81,7 +85,7 @@ impl OrchestraContract {
             let completed_jobs = existing.completed_jobs;
             let total_earned_yocto = existing.total_earned_yocto.0;
             self.agents.insert(agent_id.clone(), Agent {
-                agent_id, owner: caller, name, description, price_yocto,
+                agent_id, owner: caller, name, description, endpoint_url, price_yocto,
                 active: true, registered_at,
                 rating_sum,
                 rating_count,
@@ -90,7 +94,7 @@ impl OrchestraContract {
             });
         } else {
             let agent = Agent {
-                agent_id: agent_id.clone(), owner: caller, name, description,
+                agent_id: agent_id.clone(), owner: caller, name, description, endpoint_url,
                 price_yocto, active: true, registered_at: env::block_timestamp(),
                 rating_sum: 0, rating_count: 0, completed_jobs: 0,
                 total_earned_yocto: U128(0),
@@ -117,7 +121,7 @@ impl OrchestraContract {
         let buyer = env::predecessor_account_id();
         let job = Job {
             id: self.jobs.len(), agent_id, buyer, provider: agent.owner.clone(),
-            task_hash, price_yocto: U128(price), status: "PAID".to_string(),
+            task_hash, result_hash: None, price_yocto: U128(price), status: "PAID".to_string(),
             created_at: env::block_timestamp(), completed_at: None, rated: false,
         };
         self.jobs.push(&job);
@@ -131,10 +135,12 @@ impl OrchestraContract {
     }
 
     /// Provider assertion only; this does not independently verify off-chain work.
-    pub fn complete_job(&mut self, job_id: u64) {
+    pub fn complete_job(&mut self, job_id: u64, result_hash: String) {
         let mut job = self.jobs.get(job_id).expect("Job not found");
         require!(job.provider == env::predecessor_account_id(), "Only the provider can complete this job");
         require!(job.status == "PAID", "Job is not awaiting completion");
+        require!(result_hash.len() == 64 && result_hash.chars().all(|c| c.is_ascii_hexdigit()), "result_hash must be a SHA-256 hex digest");
+        job.result_hash = Some(result_hash);
         job.status = "COMPLETED".to_string();
         job.completed_at = Some(env::block_timestamp());
         let mut agent = self.agents.get(&job.agent_id).expect("Agent not found").clone();
@@ -158,6 +164,10 @@ impl OrchestraContract {
         self.agents.insert(job.agent_id.clone(), agent);
         job.rated = true;
         self.jobs.replace(job_id, &job);
+    }
+
+    pub fn get_job(&self, job_id: u64) -> Option<Job> {
+        self.jobs.get(job_id).cloned()
     }
 
     pub fn get_agent(&self, agent_id: String) -> Option<Agent> {
