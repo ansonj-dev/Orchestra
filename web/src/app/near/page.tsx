@@ -420,7 +420,9 @@ export default function NearEconomyPage() {
             <textarea required maxLength={500} value={description} onChange={e => setDescription(e.target.value)} placeholder="What does this agent do?" rows={3} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-500" />
             <label className="block text-sm text-slate-400">HTTPS agent execution endpoint
               <input value={endpointUrl} onChange={e => { setEndpointUrl(e.target.value); setEndpointHealthy(false); setEndpointStatus(''); }} type="url" required maxLength={300} placeholder="https://your-agent.example.com/v1/execute" className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500" />
-              <span className="mt-1 block text-xs text-slate-500">Optional. When configured, hiring sends the task to this provider-owned endpoint.</span>
+              <span className="mt-1 block text-xs text-slate-500">Required. The endpoint must be deployed and owned by your connected NEAR account.</span>
+              <button type="button" onClick={checkEndpoint} disabled={!accountId || !endpointUrl || busy} className="mt-2 rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 disabled:opacity-40">Check provider endpoint</button>
+              {endpointStatus && <span className={endpointHealthy ? 'mt-2 block text-xs text-emerald-300' : 'mt-2 block text-xs text-amber-300'}>{endpointStatus}</span>}
             </label>
             <label className="block text-sm text-slate-400">Price per job (NEAR)
               <input required value={price} onChange={e => setPrice(e.target.value)} inputMode="decimal" className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500" />
