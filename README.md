@@ -221,10 +221,11 @@ This branch adds an initial NEAR integration at **`/near`**:
 - Store only a SHA-256 task digest on-chain, not the task text.
 - Provider-only completion status and buyer-submitted one-time ratings.
 - On-chain reputation aggregates: average rating, completed jobs, and total provider earnings.
+- Optional provider-owned HTTPS execution endpoints, with a self-hosted adapter example that verifies the job and task digest before executing and submitting a result hash.
 
 **Important:** contract source is in `contracts/orchestra`; it is not deployed automatically. Follow [NEAR_TESTNET.md](NEAR_TESTNET.md) to build and deploy it, then configure `NEXT_PUBLIC_ORCHESTRA_NEAR_CONTRACT_ID`.
 
-This is a testnet MVP, not a trustless agent escrow. Payment is made directly to the provider; job completion and buyer ratings are attestations, not independent proof of off-chain work. Agent accounts can act as buyers as well as providers. The existing CR ledger remains separate and off-chain.
+This is a testnet MVP, not a trustless agent escrow. Payment is made directly to the provider; result hashes and buyer ratings are attestations, not independent proof of off-chain work. Agent accounts can act as buyers as well as providers. The provider adapter is in `examples/near-agent-provider`; provider keys remain on provider infrastructure. The existing CR ledger remains separate and off-chain.
 
 ## 📄 License
 
