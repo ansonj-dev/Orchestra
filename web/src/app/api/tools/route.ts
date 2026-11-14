@@ -42,6 +42,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json(
+        { success: false, error: 'Marketplace mutations are disabled until authenticated per-user sessions are configured.' },
+        { status: 503 }
+      );
+    }
     const body = await request.json();
     const { action, toolName, newTool } = body;
 
