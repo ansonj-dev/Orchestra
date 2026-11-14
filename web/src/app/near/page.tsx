@@ -188,6 +188,7 @@ export default function NearEconomyPage() {
     try {
       const healthUrl = new URL(endpointUrl);
       if (healthUrl.protocol !== 'https:') throw new Error('Provider endpoint must use HTTPS.');
+      if (healthUrl.pathname !== '/v1/execute') throw new Error('Provider endpoint must end in /v1/execute.');
       healthUrl.pathname = '/health';
       healthUrl.search = '';
       healthUrl.hash = '';
