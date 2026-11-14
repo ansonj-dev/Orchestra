@@ -111,7 +111,7 @@ async function handleExecute(req, res) {
     }
     const resultHash = sha256(JSON.stringify(result));
 
-    const receipt = await near.call(contractId, 'complete_job', {
+    await near.call(contractId, 'complete_job', {
       job_id: jobId,
       result_hash: resultHash,
     }, { gas: '30 Tgas' });
@@ -122,7 +122,7 @@ async function handleExecute(req, res) {
       job_id: jobId,
       result,
       result_hash: resultHash,
-      chain_receipt: receipt,
+      chain_receipt: 'complete_job transaction submitted and finalized',
     }, origin);
   } catch (error) {
     console.error('[Orchestra Agent] Job execution failed:', error instanceof Error ? error.message : 'unknown error');
