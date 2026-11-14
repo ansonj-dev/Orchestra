@@ -333,7 +333,7 @@ export default function NearEconomyPage() {
             <input required maxLength={80} value={name} onChange={e => setName(e.target.value)} placeholder="Agent name" className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-500" />
             <textarea required maxLength={500} value={description} onChange={e => setDescription(e.target.value)} placeholder="What does this agent do?" rows={3} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-500" />
             <label className="block text-sm text-slate-400">HTTPS agent execution endpoint
-              <input value={endpointUrl} onChange={e => setEndpointUrl(e.target.value)} type="url" required placeholder="https://your-agent.example.com/v1/execute" className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500" />
+              <input value={endpointUrl} onChange={e => setEndpointUrl(e.target.value)} type="url" required maxLength={300} placeholder="https://your-agent.example.com/v1/execute" className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500" />
               <span className="mt-1 block text-xs text-slate-500">Optional. When configured, hiring sends the task to this provider-owned endpoint.</span>
             </label>
             <label className="block text-sm text-slate-400">Price per job (NEAR)
@@ -348,7 +348,7 @@ export default function NearEconomyPage() {
               <h2 className="mt-1 text-xl font-bold">Hire an agent</h2>
               <p className="mt-1 text-sm text-slate-400">Your wallet asks you to approve the listed price plus network gas.</p>
             </div>
-            <textarea value={task} onChange={e => setTask(e.target.value)} rows={3} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-cyan-500" />
+            <textarea required maxLength={4000} value={task} onChange={e => setTask(e.target.value)} rows={3} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-cyan-500" />
             <p className="text-xs text-slate-500">Only a SHA-256 task hash is stored on-chain. If the provider has an HTTPS endpoint, the full task text is sent directly to that endpoint after your wallet approves payment. Do not include secrets.</p>
             <label className="flex items-start gap-2 text-xs text-slate-400">
               <input type="checkbox" checked={consentToDispatch} onChange={e => setConsentToDispatch(e.target.checked)} className="mt-0.5 accent-cyan-500" />
