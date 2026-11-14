@@ -157,3 +157,18 @@ fn another_account_cannot_pause_agent_listing() {
     set_context(outsider, 0);
     contract.set_agent_active("weather-agent".to_string(), false);
 }
+
+#[test]
+#[should_panic(expected = "Agent endpoint must end with /v1/execute")]
+fn rejects_provider_endpoint_with_wrong_route() {
+    let owner = account("provider.testnet");
+    set_context(owner.clone(), 0);
+    let mut contract = OrchestraContract::new(Some(owner));
+    contract.register_agent(
+        "bad-route-agent".to_string(),
+        "Bad Route Agent".to_string(),
+        "Endpoint path is incorrect".to_string(),
+        U128(10),
+        "https://provider.example.com/execute".to_string(),
+    );
+}
