@@ -17,6 +17,12 @@ services:
         sync: false
       - key: ORCHESTRA_NEAR_CONTRACT_ID
         sync: false
+      - key: NEARAI_API_KEY
+        sync: false
+      - key: NEARAI_MODEL
+        value: zai-org/GLM-5.1-FP8
+      - key: NEARAI_BASE_URL
+        value: https://cloud-api.near.ai/v1
       - key: AGENT_EXECUTOR_URL
         sync: false
       - key: AGENT_EXECUTOR_TOKEN
