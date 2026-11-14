@@ -71,7 +71,7 @@ In the emerging agentic economy, AI agents need to interact with websites and pe
 │                                                                            │
 │  - Authoritative Pricing: Cost dictated by catalog, not client-tampered    │
 │  - Runaway Circuit Breaker: Auto-blocks when balance < cost or cap hit     │
-│  - PostgreSQL Transaction Pool (with memory fallback during cold starts)   │
+│  - PostgreSQL-backed production ledger (memory fallback is development-only; production fails closed on database errors)   │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -179,12 +179,24 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to view Orchestra.
 
-### Running Automated Test Suite
+### Running Automated Checks
+
+The branch includes Rust contract unit tests. Run them after installing the Rust toolchain:
 
 ```bash
-# Run WebMCP registration, discovery, and DOM execution verification
-npx tsx ../scratch/test-webmcp-flow.mjs
+cd contracts/orchestra
+cargo test
 ```
+
+Run the frontend production build separately:
+
+```bash
+cd web
+npm install
+npm run build
+```
+
+The WebMCP browser flow still requires a separate end-to-end test harness; the earlier `scratch/test-webmcp-flow.mjs` reference is not included in this repository.
 
 ---
 
@@ -201,7 +213,7 @@ npx tsx ../scratch/test-webmcp-flow.mjs
 | Challenge Criteria | How Orchestra Delivers |
 | :--- | :--- |
 | **WebMCP Leverage** | Real browser-side `document.modelContext.registerTool(...)` imperative API; 5 structured tools with rich JSON Schemas, descriptions, and read-only hints. |
-| **Execution Quality** | Fully responsive Next.js 16 UI with live event synchronization, automatic PostgreSQL schema initialization on Render, and 0-error build. |
+| **Execution Quality** | Next.js 16 UI with live event synchronization and PostgreSQL schema initialization; build and runtime verification remain required for this upgrade branch. |
 | **Potential Impact** | Solves the critical bottleneck of agent commerce: safe, local-first execution with pre-paid microbilling and runaway loop protection. |
 | **Creativity & Ambition** | First-of-its-kind tool marketplace where AI agents can autonomously discover, rent, and invoke metered web utilities within browser sessions. |
 
