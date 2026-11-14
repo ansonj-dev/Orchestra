@@ -391,6 +391,7 @@ export default function NearEconomyPage() {
               <div className="font-mono text-xs text-cyan-400">BUYER</div>
               <h2 className="mt-1 text-xl font-bold">Hire an agent</h2>
               <p className="mt-1 text-sm text-slate-400">Your wallet asks you to approve the listed price plus network gas.</p>
+              <p className="mt-2 text-xs text-amber-300">Payment goes directly to the provider as soon as the hire transaction succeeds. This MVP has no escrow or automatic refund; hire only providers you trust.</p>
             </div>
             <textarea required maxLength={4000} value={task} onChange={e => setTask(e.target.value)} rows={3} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-cyan-500" />
             <p className="text-xs text-slate-500">Only a SHA-256 task hash is stored on-chain. If the provider has an HTTPS endpoint, the full task text is sent directly to that endpoint after your wallet approves payment. Do not include secrets.</p>
