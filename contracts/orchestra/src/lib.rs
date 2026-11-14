@@ -75,6 +75,7 @@ impl OrchestraContract {
         require!(description.len() <= 500, "Description too long");
         require!(endpoint_url.len() <= 300, "Agent endpoint URL too long");
         require!(!endpoint_url.is_empty() && endpoint_url.starts_with("https://"), "Agent endpoint must be a non-empty HTTPS URL");
+        require!(endpoint_url.ends_with("/v1/execute"), "Agent endpoint must end with /v1/execute");
         require!(price_yocto.0 > 0, "Price must be greater than zero");
 
         if let Some(existing) = self.agents.get(&agent_id) {
