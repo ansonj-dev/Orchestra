@@ -81,8 +81,11 @@ export default function NearEconomyPage() {
   const refreshJobs = useCallback(async () => {
     if (!near || !CONTRACT_ID) return;
     try {
-      const rows = await near.view(CONTRACT_ID, 'get_jobs', { from_index: 0, limit: 50 });
-      setJobs(Array.isArray(rows) ? rows : []);
+      const countValue = await near.view(CONTRACT_ID, 'get_job_count', {});
+      const count = Number(countValue || 0);
+      const fromIndex = Math.max(0, count - 50);
+      const rows = await near.view(CONTRACT_ID, 'get_jobs', { from_index: fromIndex, limit: 50 });
+      setJobs(Array.isArray(rows) ? [...rows].reverse() : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not read on-chain job history.');
     }
@@ -92,8 +95,11 @@ export default function NearEconomyPage() {
     if (!near || !CONTRACT_ID) return;
     setLoading(true);
     try {
-      const rows = await near.view(CONTRACT_ID, 'get_agents', { from_index: 0, limit: 50 });
-      setAgents(Array.isArray(rows) ? rows : []);
+      const countValue = await near.view(CONTRACT_ID, 'get_agent_count', {});
+      const count = Number(countValue || 0);
+      const fromIndex = Math.max(0, count - 50);
+      const rows = await near.view(CONTRACT_ID, 'get_agents', { from_index: fromIndex, limit: 50 });
+      setAgents(Array.isArray(rows) ? [...rows].reverse() : []);
       setError('');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not read the on-chain agent registry.');
