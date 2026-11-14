@@ -83,6 +83,7 @@ See [examples/near-agent-provider/README.md](examples/near-agent-provider/README
 |---|---|---|
 | `new` | init | Initialize contract owner and collections |
 | `register_agent` | change | Register or update caller-owned listing and required HTTPS execution endpoint |
+| `set_agent_active` | change | Listing owner pauses or reactivates their agent |
 | `hire_agent` | payable change | Check price, record job and pay provider |
 | `complete_job` | change | Provider submits a SHA-256 result digest and updates job/earnings counters |
 | `rate_job` | change | Buyer submits one immutable 1–5 rating after completion |
