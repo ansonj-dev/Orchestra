@@ -242,6 +242,25 @@ export default function NearEconomyPage() {
     }
   };
 
+  const toggleAgent = async (agent: Agent) => {
+    if (!near || !CONTRACT_ID || agent.owner !== accountId) return;
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      await near.call(CONTRACT_ID, 'set_agent_active', {
+        agent_id: agent.agent_id,
+        active: !agent.active,
+      });
+      setNotice(agent.name + ' is now ' + (!agent.active ? 'active' : 'paused') + ' on NEAR testnet.');
+      await refreshAgents();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not update agent listing status.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const retryDispatch = async (job: Job) => {
     if (!near || !CONTRACT_ID) return;
     const agent = agents.find(item => item.agent_id === job.agent_id);
@@ -385,7 +404,10 @@ export default function NearEconomyPage() {
                 <article key={agent.agent_id} className="rounded-xl border border-slate-800 bg-slate-950/70 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <h3 className="font-bold text-white">{agent.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-white">{agent.name}</h3>
+                        <span className={agent.active ? 'rounded-full bg-emerald-950 px-2 py-0.5 text-[10px] font-bold text-emerald-300' : 'rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-400'}>{agent.active ? 'ACTIVE' : 'PAUSED'}</span>
+                      </div>
                       <p className="mt-1 text-sm text-slate-400">{agent.description}</p>
                       <p className="mt-2 text-xs text-slate-500">Provider: {agent.owner}</p>
                       <p className="mt-1 text-xs text-cyan-300 break-all">{agent.endpoint_url}</p>
@@ -399,6 +421,9 @@ export default function NearEconomyPage() {
                     </div>
                     <div className="text-right">
                       <div className="font-mono font-bold text-emerald-300">{yoctoToNear(agent.price_yocto)} NEAR</div>
+                      {accountId === agent.owner && (
+                        <button onClick={() => toggleAgent(agent)} disabled={busy} className="mt-2 rounded-lg border border-slate-700 px-3 py-2 text-xs font-bold text-slate-300 disabled:opacity-40">{agent.active ? 'Pause listing' : 'Reactivate'}</button>
+                      )}
                       <button onClick={() => hireAgent(agent)} disabled={!accountId || !CONTRACT_ID || busy || !agent.active || !agent.endpoint_url || agent.owner === accountId || !consentToDispatch} className="mt-2 rounded-lg bg-cyan-500 px-3 py-2 text-xs font-bold text-slate-950 disabled:opacity-40">Hire</button>
                     </div>
                   </div>
