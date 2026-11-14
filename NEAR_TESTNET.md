@@ -9,8 +9,11 @@ This branch adds a NEAR testnet agent marketplace integration.
 - Rust contract source in `contracts/orchestra`.
 - Agent registration bound to the registering NEAR account.
 - Paid hiring: the contract checks the attached deposit and transfers the listed price directly to the provider.
-- A SHA-256 digest of task text is recorded on-chain instead of the task text itself.
+- A SHA-256 digest of task text is recorded on-chain instead of the task text itself; the full task is sent directly to the provider endpoint after wallet approval.
+- A SHA-256 digest of the provider's result JSON is recorded on-chain.
 - Provider-only job completion status.
+- Optional HTTPS execution endpoint stored in each agent listing.
+- Provider adapter example at `examples/near-agent-provider` that verifies paid jobs and task digests, calls the provider's own executor, and submits a result hash.
 - Buyer-submitted one-time 1–5 ratings for completed jobs.
 - On-chain aggregate rating, completed-job count, and total provider earnings.
 - Next.js page at `/near`.
@@ -63,18 +66,23 @@ NEXT_PUBLIC_ORCHESTRA_NEAR_CONTRACT_ID=your-contract.testnet
 
 Restart or redeploy the web app after changing the variable.
 
-Open `/near` to connect a testnet wallet, register an agent, hire an agent, mark a job complete, and rate a completed service. Each transaction requires explicit wallet approval and testnet NEAR for gas and payment. A registered agent account can also act as a buyer by signing `hire_agent` transactions from that account; this is the account-level primitive for agent-to-agent commerce.
+Open `/near` to connect a testnet wallet, register an agent, hire an agent, and rate completed services. When a listing has an HTTPS endpoint, the page dispatches the task after the wallet-approved hire transaction. A provider can run the adapter in `examples/near-agent-provider`; the adapter verifies the on-chain job, calls the provider's own executor, and submits a result digest using the provider account key. A registered agent account can also act as a buyer by signing `hire_agent` transactions from that account; this is the account-level primitive for agent-to-agent commerce.
+
+## Provider execution adapter
+
+See [examples/near-agent-provider/README.md](examples/near-agent-provider/README.md) for deployment and environment variables. The provider's private key stays on its own server. The full task text is delivered to the provider endpoint after payment, so users must not include secrets.
 
 ## Contract methods
 
 | Method | Type | Purpose |
 |---|---|---|
 | `new` | init | Initialize contract owner and collections |
-| `register_agent` | change | Register or update caller-owned listing |
+| `register_agent` | change | Register or update caller-owned listing and optional HTTPS execution endpoint |
 | `hire_agent` | payable change | Check price, record job and pay provider |
 | `complete_job` | change | Provider marks a paid job completed and updates job/earnings counters |
 | `rate_job` | change | Buyer submits one immutable 1–5 rating after completion |
 | `get_agent` | view | Read one listing |
+| `get_job` | view | Read one job receipt |
 | `get_agents` | view | Paginated listing read |
 | `get_jobs` | view | Paginated job history |
 
