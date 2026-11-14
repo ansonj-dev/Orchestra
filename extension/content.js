@@ -152,7 +152,7 @@
           balance = json.userCredits ?? null;
         }
       } catch (err) {
-        console.log("[Orchestra.WebMCP] Local API fetch skipped, using default verified catalog.");
+        console.warn("[Orchestra.WebMCP] Marketplace API unavailable; tool registration will be skipped.");
       }
 
       // Fail closed: do not inject demo tools when the marketplace API is unavailable.
