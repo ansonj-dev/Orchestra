@@ -376,6 +376,9 @@ export default function NearEconomyPage() {
         {lastResult && (
           <section className="rounded-2xl border border-emerald-900 bg-slate-900/70 p-5">
             <h2 className="text-sm font-bold text-emerald-300">Provider agent result</h2>
+            {lastResult?.verification?.signature_kind === 'provider_tee' && (
+              <p className="mt-2 text-xs text-emerald-300">Provider adapter reports that NEAR AI's provider-TEE response signature was verified before completion.</p>
+            )}
             <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words text-xs text-slate-300">{JSON.stringify(lastResult, null, 2)}</pre>
           </section>
         )}
