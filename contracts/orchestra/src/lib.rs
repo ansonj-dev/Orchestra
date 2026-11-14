@@ -129,16 +129,18 @@ impl OrchestraContract {
     }
 
     pub fn get_agents(&self, from_index: u32, limit: u32) -> Vec<Agent> {
-        let end = std::cmp::min(self.agent_ids.len(), from_index.saturating_add(limit.min(50)));
-        (from_index..end)
+        let start = from_index as u64;
+        let end = std::cmp::min(self.agent_ids.len(), start.saturating_add(limit.min(50) as u64));
+        (start..end)
             .filter_map(|index| self.agent_ids.get(index))
             .filter_map(|id| self.agents.get(id).cloned())
             .collect()
     }
 
     pub fn get_jobs(&self, from_index: u32, limit: u32) -> Vec<Job> {
-        let end = std::cmp::min(self.jobs.len(), from_index.saturating_add(limit.min(50)));
-        (from_index..end).filter_map(|index| self.jobs.get(index)).collect()
+        let start = from_index as u64;
+        let end = std::cmp::min(self.jobs.len(), start.saturating_add(limit.min(50) as u64));
+        (start..end).filter_map(|index| self.jobs.get(index)).collect()
     }
 
     pub fn get_owner(&self) -> AccountId { self.owner.clone() }
