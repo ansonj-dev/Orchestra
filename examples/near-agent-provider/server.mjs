@@ -26,6 +26,7 @@ const near = new Near({
 });
 
 const sha256 = (value) => createHash('sha256').update(value, 'utf8').digest('hex');
+const activeJobs = new Set();
 
 function send(res, status, payload, origin) {
   res.writeHead(status, {
@@ -81,8 +82,13 @@ async function handleExecute(req, res) {
     if (job.status !== 'PAID') return send(res, 409, { success: false, error: 'Job is not awaiting provider execution.' }, origin);
     if (job.task_hash !== taskHash) return send(res, 400, { success: false, error: 'Task digest does not match the on-chain job.' }, origin);
 
-    // The provider controls this executor. Its API key stays on the provider's server.
-    const upstream = await fetch(executorUrl, {
+    if (activeJobs.has(jobId)) {
+      return send(res, 409, { success: false, error: 'This job is already being processed by this provider instance.' }, origin);
+    }
+    activeJobs.add(jobId);
+    try {
+      // The provider controls this executor. Its API key stays on the provider's server.
+      const upstream = await fetch(executorUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -100,33 +106,39 @@ async function handleExecute(req, res) {
       signal: AbortSignal.timeout(45_000),
     });
 
-    const upstreamText = await upstream.text();
-    if (!upstream.ok) {
+      const upstreamText = await upstream.text();
+      if (Buffer.byteLength(upstreamText, 'utf8') > 100_000) {
+        return send(res, 502, { success: false, error: 'Agent executor response exceeded 100 KB.' }, origin);
+      }
+      if (!upstream.ok) {
       console.error('[Orchestra Agent] Executor returned HTTP', upstream.status, 'for job', jobId);
       return send(res, 502, { success: false, error: 'Agent executor failed with HTTP ' + upstream.status + '.' }, origin);
     }
 
-    let result;
-    try {
-      result = JSON.parse(upstreamText);
-    } catch {
-      result = { output: upstreamText };
+      let result;
+      try {
+        result = JSON.parse(upstreamText);
+      } catch {
+        result = { output: upstreamText };
+      }
+      const resultHash = sha256(JSON.stringify(result));
+
+      await near.call(contractId, 'complete_job', {
+        job_id: jobId,
+        result_hash: resultHash,
+      }, { gas: '30 Tgas' });
+
+      console.log('[Orchestra Agent] Completed job', jobId, 'with result digest', resultHash);
+      return send(res, 200, {
+        success: true,
+        job_id: jobId,
+        result,
+        result_hash: resultHash,
+        chain_receipt: 'complete_job transaction submitted and finalized',
+      }, origin);
+    } finally {
+      activeJobs.delete(jobId);
     }
-    const resultHash = sha256(JSON.stringify(result));
-
-    await near.call(contractId, 'complete_job', {
-      job_id: jobId,
-      result_hash: resultHash,
-    }, { gas: '30 Tgas' });
-
-    console.log('[Orchestra Agent] Completed job', jobId, 'with result digest', resultHash);
-    return send(res, 200, {
-      success: true,
-      job_id: jobId,
-      result,
-      result_hash: resultHash,
-      chain_receipt: 'complete_job transaction submitted and finalized',
-    }, origin);
   } catch (error) {
     console.error('[Orchestra Agent] Job execution failed:', error instanceof Error ? error.message : 'unknown error');
     return send(res, 500, { success: false, error: 'Agent execution or on-chain completion failed.' }, origin);
