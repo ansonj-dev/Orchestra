@@ -25,3 +25,5 @@ services:
           property: connectionString
       - key: NEXT_PUBLIC_APP_URL
         sync: false       # Set this manually after first deploy
+      - key: NEXT_PUBLIC_ORCHESTRA_NEAR_CONTRACT_ID
+        sync: false       # Set after deploying the NEAR testnet contract
