@@ -48,10 +48,10 @@ export async function POST(request: Request) {
 
     const code = typeof javascript_code === 'string' ? javascript_code : '';
     const unsafePatterns = [
-      { pattern: /\\beval\\s*\\(/i, label: 'eval()' },
-      { pattern: /\\bnew\\s+Function\\b|\\bFunction\\s*\\(/i, label: 'dynamic Function constructor' },
-      { pattern: /\\bdocument\\.write\\s*\\(/i, label: 'document.write()' },
-      { pattern: /\\.innerHTML\\s*\\+?=/i, label: 'innerHTML assignment' }
+      { pattern: /\beval\s*\(/i, label: 'eval()' },
+      { pattern: /\bnew\s+Function\b|\bFunction\s*\(/i, label: 'dynamic Function constructor' },
+      { pattern: /\bdocument\.write\s*\(/i, label: 'document.write()' },
+      { pattern: /\.innerHTML\s*\\+?=/i, label: 'innerHTML assignment' }
     ];
     const detected = unsafePatterns.filter(({ pattern }) => pattern.test(code)).map(({ label }) => label);
     const codePassed = detected.length === 0;
