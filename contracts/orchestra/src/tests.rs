@@ -24,12 +24,14 @@ fn agent_owner_can_register_and_update_listing() {
         "Research Agent".to_string(),
         "Research and summarization".to_string(),
         U128(10),
+        "https://provider.example.com/v1/execute".to_string(),
     );
     contract.register_agent(
         "research-agent".to_string(),
         "Research Agent v2".to_string(),
         "Updated service description".to_string(),
         U128(20),
+        "https://provider.example.com/v1/execute".to_string(),
     );
 
     let agent = contract.get_agent("research-agent".to_string()).unwrap();
@@ -51,6 +53,7 @@ fn buyer_can_rate_completed_job_once_and_agent_reputation_updates() {
         "Data Agent".to_string(),
         "Structured data service".to_string(),
         U128(100),
+        "https://provider.example.com/v1/execute".to_string(),
     );
 
     set_context(buyer.clone(), 100);
@@ -59,7 +62,7 @@ fn buyer_can_rate_completed_job_once_and_agent_reputation_updates() {
     assert_eq!(job.buyer, buyer);
 
     set_context(provider.clone(), 0);
-    contract.complete_job(job.id);
+    contract.complete_job(job.id, "c".repeat(64));
 
     set_context(buyer.clone(), 0);
     contract.rate_job(job.id, 5);
@@ -88,6 +91,7 @@ fn third_party_cannot_rate_another_buyers_job() {
         "Translator".to_string(),
         "Translation service".to_string(),
         U128(50),
+        "https://provider.example.com/v1/execute".to_string(),
     );
 
     set_context(buyer, 50);
