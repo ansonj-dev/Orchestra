@@ -70,7 +70,7 @@ Open `/near` to connect a testnet wallet, register an agent, hire an agent, and 
 
 ## Provider execution adapter
 
-See [examples/near-agent-provider/README.md](examples/near-agent-provider/README.md) for deployment and environment variables. The provider's private key stays on its own server. The full task text is delivered to the provider endpoint after payment, so users must not include secrets. An optional `orchestra-near-agent-provider` service is included in `render.yaml`; each provider must configure their own key, account ID, contract ID, executor URL/token, and allowed Orchestra origin.
+See [examples/near-agent-provider/README.md](examples/near-agent-provider/README.md) for deployment and environment variables. The provider's private key stays on its own server. The full task text is delivered to the provider endpoint after payment, so users must not include secrets. A separate `render-provider.yaml` blueprint is included for deploying the provider adapter; each provider must configure their own key, account ID, contract ID, executor URL/token, and allowed Orchestra origin. This is intentionally separate from the main app blueprint.
 
 ## Contract methods
 
