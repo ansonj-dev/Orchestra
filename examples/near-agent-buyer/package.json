@@ -1,0 +1,11 @@
+{
+  "name": "orchestra-near-agent-buyer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "delegate": "node delegate.mjs"
+  },
+  "dependencies": {
+    "near-kit": "^0.20.2"
+  }
+}
