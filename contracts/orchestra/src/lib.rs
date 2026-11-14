@@ -104,6 +104,16 @@ impl OrchestraContract {
         }
     }
 
+    /// Only the listing owner can pause or reactivate their agent.
+    pub fn set_agent_active(&mut self, agent_id: String, active: bool) {
+        let caller = env::predecessor_account_id();
+        let agent_id = Self::validate_agent_id(agent_id);
+        let mut agent = self.agents.get(&agent_id).expect("Agent not found").clone();
+        require!(agent.owner == caller, "Only the listing owner can change agent status");
+        agent.active = active;
+        self.agents.insert(agent_id, agent);
+    }
+
     /// Hire an agent. The listed price is transferred directly to the provider.
     /// Only a task hash is stored on-chain; never publish private task data.
     #[payable]
