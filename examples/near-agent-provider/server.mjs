@@ -154,7 +154,7 @@ async function handleExecute(req, res) {
               content: task,
             },
           ],
-        });
+        }, { signal: AbortSignal.timeout(45_000) });
         const verification = await inference.verifyResponse(completion.id);
         if (verification.signatureKind !== 'provider_tee') {
           throw new Error('NEAR AI response did not carry a verified provider TEE signature.');
