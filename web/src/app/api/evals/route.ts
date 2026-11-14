@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       { pattern: /\beval\s*\(/i, label: 'eval()' },
       { pattern: /\bnew\s+Function\b|\bFunction\s*\(/i, label: 'dynamic Function constructor' },
       { pattern: /\bdocument\.write\s*\(/i, label: 'document.write()' },
-      { pattern: /\.innerHTML\s*\\+?=/i, label: 'innerHTML assignment' }
+      { pattern: /\.innerHTML/i, label: 'innerHTML usage' }
     ];
     const detected = unsafePatterns.filter(({ pattern }) => pattern.test(code)).map(({ label }) => label);
     const codePassed = detected.length === 0;
