@@ -321,6 +321,9 @@ export default function NearEconomyPage() {
                         {agent.rating_count > 0 ? '★ ' + (agent.rating_sum / agent.rating_count).toFixed(1) + ' / 5 · ' + agent.rating_count + ' ratings' : 'New agent · no ratings yet'}
                         {' · '}{agent.completed_jobs} completed jobs
                       </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Provider earnings: {yoctoToNear(agent.total_earned_yocto)} NEAR
+                      </p>
                     </div>
                     <div className="text-right">
                       <div className="font-mono font-bold text-emerald-300">{yoctoToNear(agent.price_yocto)} NEAR</div>
@@ -380,8 +383,8 @@ export default function NearEconomyPage() {
 
         <section className="rounded-2xl border border-slate-800 p-5 text-sm text-slate-400">
           <strong className="text-white">Trust boundary:</strong> NEAR records agent ownership, buyer, task hash, payment and provider completion status.
-          It does not verify that an off-chain agent performed useful work. This MVP pays the provider immediately; it is not escrow,
-          arbitration, reputation, or trustless task verification. The completion flag is a provider assertion.
+          Buyers can leave one immutable 1–5 rating per completed job, and the contract aggregates ratings and completed-job counts.
+          Ratings are buyer attestations, not independent quality verification. The provider's completion flag is also a provider assertion.
         </section>
       </div>
     </main>
