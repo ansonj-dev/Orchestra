@@ -38,8 +38,17 @@ async function main() {
   const agent = await near.view(contractId, 'get_agent', { agent_id: targetAgentId });
   if (!agent || !agent.active) throw new Error('Target agent is missing or inactive.');
   if (agent.owner === buyerAccountId) throw new Error('Buyer agent cannot hire its own listing.');
-  if (!agent.endpoint_url || !agent.endpoint_url.startsWith('https://')) {
-    throw new Error('Target agent has no valid HTTPS execution endpoint.');
+  if (!agent.endpoint_url || !agent.endpoint_url.startsWith('https://') || !agent.endpoint_url.endsWith('/v1/execute')) {
+    throw new Error('Target agent has no valid HTTPS /v1/execute endpoint.');
+  }
+  const healthUrl = new URL(agent.endpoint_url);
+  healthUrl.pathname = '/health';
+  healthUrl.search = '';
+  healthUrl.hash = '';
+  const healthResponse = await fetch(healthUrl, { signal: AbortSignal.timeout(10_000) });
+  const health = await healthResponse.json();
+  if (!healthResponse.ok || !health?.success || health.account_id !== agent.owner || health.network !== 'testnet') {
+    throw new Error('Provider endpoint health or on-chain owner account verification failed. No payment was sent.');
   }
 
   const taskHash = sha256(task);
