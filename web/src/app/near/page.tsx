@@ -239,6 +239,19 @@ export default function NearEconomyPage() {
     setNotice('');
     setLastResult(null);
     try {
+      const healthUrl = new URL(agent.endpoint_url);
+      if (healthUrl.protocol !== 'https:' || healthUrl.pathname !== '/v1/execute') {
+        throw new Error('Provider listing has an invalid HTTPS execution endpoint.');
+      }
+      healthUrl.pathname = '/health';
+      healthUrl.search = '';
+      healthUrl.hash = '';
+      const healthResponse = await fetch(healthUrl.toString(), { cache: 'no-store' });
+      const health = await healthResponse.json();
+      if (!healthResponse.ok || !health?.success || health.account_id !== agent.owner || health.network !== 'testnet') {
+        throw new Error('Provider endpoint is offline or does not match the on-chain owner. No payment was sent.');
+      }
+
       // Only the SHA-256 digest is written on-chain. Keep private task details off-chain.
       const taskHash = await sha256(task);
       const created = await near.call(CONTRACT_ID, 'hire_agent', {
