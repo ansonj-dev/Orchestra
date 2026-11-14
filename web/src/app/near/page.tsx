@@ -120,11 +120,24 @@ export default function NearEconomyPage() {
         instance.on('wallet:signOut', () => {
           if (!active) return;
           setAccountId('');
-          setNear(null);
+          setNear(new Near({ network: 'testnet' }));
           setNotice('Wallet disconnected.');
         });
+        let restoredAccountId = '';
+        try {
+          const wallet = await instance.wallet();
+          const accounts = await wallet.getAccounts();
+          restoredAccountId = accounts?.[0]?.accountId || '';
+        } catch {
+          // No existing wallet session; public registry browsing remains available.
+        }
         if (active) {
-          setNear(new Near({ network: 'testnet' }));
+          if (restoredAccountId) {
+            setAccountId(restoredAccountId);
+            setNear(new Near({ network: 'testnet', wallet: fromHotConnect(instance) }));
+          } else {
+            setNear(new Near({ network: 'testnet' }));
+          }
           setConnector(instance);
         }
       } catch (e) {
