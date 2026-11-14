@@ -37,8 +37,8 @@ const EXPLORER = 'https://testnet.nearblocks.io';
 function yoctoToNear(value: string) {
   const amount = BigInt(value || '0');
   const whole = amount / 10n ** 24n;
-  const fraction = (amount % (10n ** 24n)).toString().padStart(24, '0').slice(0, 4);
-  return whole.toString() + '.' + fraction;
+  const fraction = (amount % (10n ** 24n)).toString().padStart(24, '0').replace(/0+$/, '');
+  return fraction ? whole.toString() + '.' + fraction : whole.toString();
 }
 
 function nearToYocto(value: string) {
