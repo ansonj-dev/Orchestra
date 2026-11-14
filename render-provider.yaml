@@ -23,8 +23,6 @@ services:
         sync: false
       - key: NEARAI_MODEL
         value: z-ai/glm-5.3-flash
-      - key: NEARAI_BASE_URL
-        value: https://cloud-api.near.ai/v1
       - key: AGENT_EXECUTOR_URL
         sync: false
       - key: AGENT_EXECUTOR_TOKEN
