@@ -188,3 +188,6 @@ impl OrchestraContract {
         normalized
     }
 }
+
+#[cfg(test)]
+mod tests;
