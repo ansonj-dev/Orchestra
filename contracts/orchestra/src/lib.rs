@@ -134,7 +134,7 @@ impl OrchestraContract {
         let end = std::cmp::min(self.agent_ids.len(), start.saturating_add(limit.min(50) as u64));
         (start..end)
             .filter_map(|index| self.agent_ids.get(index))
-            .filter_map(|id| self.agents.get(id).cloned())
+            .filter_map(|id| self.agents.get(&id).cloned())
             .collect()
     }
 
