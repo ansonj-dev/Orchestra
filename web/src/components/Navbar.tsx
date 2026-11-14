@@ -92,6 +92,7 @@ export default function Navbar() {
     { name: 'Multi-Agent Roster', href: '/roster' },
     { name: 'Dev Studio & Evals', href: '/studio' },
     { name: 'IDE Bridge', href: '/ide-bridge' },
+    { name: 'NEAR Economy', href: '/near' },
     { name: 'Target Demo', href: '/demo-target' },
   ];
 
