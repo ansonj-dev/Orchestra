@@ -83,6 +83,15 @@ async function main() {
     throw new Error('Job was paid, but provider execution failed: ' + (result?.error || response.statusText) + '. Inspect on-chain job #' + jobId + ' before retrying.');
   }
 
+  const localResultHash = sha256(JSON.stringify(result.result));
+  if (localResultHash !== result.result_hash) {
+    throw new Error('Provider result does not match the returned SHA-256 digest.');
+  }
+  const onChainJob = await near.view(contractId, 'get_job', { job_id: jobId });
+  if (!onChainJob || onChainJob.status !== 'COMPLETED' || onChainJob.result_hash !== result.result_hash) {
+    throw new Error('Provider result digest does not match the completed NEAR job receipt.');
+  }
+
   console.log(JSON.stringify({
     success: true,
     buyer: buyerAccountId,
