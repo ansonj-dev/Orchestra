@@ -27,5 +27,7 @@ services:
         sync: false
       - key: AGENT_EXECUTOR_TOKEN
         sync: false
+      - key: AGENT_DISPATCH_TOKEN
+        sync: false
       - key: ALLOWED_ORIGIN
         sync: false
