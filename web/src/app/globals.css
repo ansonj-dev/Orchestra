@@ -240,3 +240,44 @@ html,body{background:var(--paper)!important;color:var(--ink)!important}
 @media(max-width:900px){.orchestra-home{padding:0 22px 38px}.main-nav{display:none;position:absolute;top:100%;left:12px;right:12px;flex-direction:column;box-shadow:var(--hard)}.main-nav.nav-open{display:flex}.nav-link{border-right:0;border-bottom:2px solid var(--ink);min-height:44px}.mobile-menu{display:block}.hero-wrap{grid-template-columns:1fr 1fr;gap:8px}.hero-art{min-height:320px}.float-agents{width:140px;height:84px;font-size:15px}.float-near{width:95px;height:90px}.capability-grid{gap:12px}.capability-card{padding:15px 12px;gap:8px}.capability-icon{flex-basis:36px;font-size:34px}.capability-content h2{font-size:17px}.capability-content p{font-size:10px}}
 @media(max-width:640px){.nav-inner{padding:9px 13px}.brand-word{font-size:19px;padding:8px 11px}.wallet-link{padding:8px 9px;font-size:9px}.orchestra-home{padding:0 14px 30px}.hero-wrap{display:flex;flex-direction:column;align-items:stretch;padding:25px 2px 18px}.hero-copy h1{font-size:clamp(50px,14vw,74px);margin-top:18px}.burst-mark{right:8%;font-size:36px}.hero-ribbon{font-size:12px;padding:8px 10px}.hero-description{font-size:16px;margin:17px 0}.hero-actions{gap:10px}.brutal-button{min-height:47px;padding:0 12px;font-size:11px;box-shadow:4px 4px 0 var(--ink)}.hero-note{font-size:8px}.hero-art{min-height:285px;margin-top:8px}.computer{width:58%}.screen{height:165px;border-width:6px;padding:13px}.screen-face{border-width:5px;font-size:29px}.screen-face strong{font-size:37px}.float-agents{left:0;width:120px;height:72px;border-width:4px;font-size:13px}.float-near{right:0;width:78px;height:75px;border-width:4px;font-size:11px}.float-near strong{font-size:36px}.float-code{width:72px;height:52px;font-size:19px;border-width:4px}.art-caption{right:3%;font-size:7px}.capability-grid,.agent-type-grid{grid-template-columns:1fr;gap:12px}.capability-card{min-height:120px;padding:16px}.capability-icon{flex-basis:44px;font-size:39px}.capability-content h2{font-size:20px}.capability-content p{font-size:11px}.agents-section{padding:16px}.section-heading{align-items:flex-start;flex-direction:column}.section-heading h2{font-size:27px}.economy-strip{grid-template-columns:1fr;gap:16px;padding:22px 4px}.bottom-cta{align-items:flex-start;flex-direction:column;padding-top:28px}.orchestra-footer{padding:16px}.orchestra-footer-inner{align-items:flex-start;flex-direction:column}.footer-links{flex-wrap:wrap;gap:9px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+
+/* Neo-brutalist visual treatment for the EXISTING Orchestra product.
+   This layer changes presentation only; it does not hide or remove features. */
+body{background:#fffaf0!important;color:#111!important}
+header.sticky{background:#fffaf0!important;border-bottom:2px solid #111!important;backdrop-filter:none!important}
+header.sticky .max-w-7xl{gap:18px}
+header.sticky a,header.sticky button{border-radius:0!important}
+header.sticky .rounded-xl,header.sticky .rounded-full{border-radius:0!important}
+header.sticky [class*="bg-gradient-to-tr"]{background:#efff00!important;color:#111!important;box-shadow:4px 4px 0 #111!important;border:2px solid #111!important}
+header.sticky [class*="bg-cyan-500/10"]{background:#efff00!important;color:#111!important;border:2px solid #111!important}
+header.sticky [class*="bg-slate-900"]{background:#fffaf0!important;color:#111!important;border:2px solid #111!important;box-shadow:3px 3px 0 #111!important}
+header.sticky [class*="text-cyan-400"],header.sticky [class*="text-cyan-300"]{color:#111!important}
+header.sticky nav a{font-weight:900!important}
+header.sticky nav a:hover{background:#efff00!important;color:#111!important}
+header.sticky button:hover{background:#efff00!important;color:#111!important}
+body>div{background:#fffaf0}
+main,body>div>div{color:#111}
+.bg-slate-950{background:#fffaf0!important;color:#111!important}
+.bg-slate-900,.bg-slate-900\/80,.bg-slate-900\/70,.bg-slate-900\/60,.bg-slate-900\/30,.bg-slate-900\/20{background:#fffdf7!important;color:#111!important}
+.bg-slate-800,.bg-slate-800\/80{background:#f4eddf!important;color:#111!important}
+.text-white,.text-slate-100,.text-slate-200{color:#111!important}
+.text-slate-300,.text-slate-400,.text-slate-500{color:#49463f!important}
+.border-slate-800,.border-slate-800\/80,.border-slate-700{border-color:#111!important}
+.rounded-2xl,.rounded-xl,.rounded-lg,.rounded-full{border-radius:3px!important}
+.shadow-2xl,.shadow-xl,.shadow-lg{box-shadow:4px 4px 0 #111!important}
+[class*="bg-gradient-to-r from-cyan-500"],[class*="bg-gradient-to-r from-purple-500"],[class*="bg-gradient-to-r from-emerald-500"]{background:#efff00!important;color:#111!important;border:2px solid #111!important;box-shadow:4px 4px 0 #111!important}
+button[class*="bg-slate-900"],a[class*="bg-slate-900"]{border:2px solid #111!important;box-shadow:3px 3px 0 #111!important}
+input,textarea,select{background:#fffdf7!important;color:#111!important;border:2px solid #111!important;border-radius:2px!important}
+input::placeholder,textarea::placeholder{color:#68645b!important}
+main .text-cyan-400,main .text-cyan-300{color:#282820!important}
+main .bg-cyan-950,main .bg-cyan-950\/60{background:#efff00!important;color:#111!important;border-color:#111!important}
+main .bg-emerald-500\/10,main .bg-emerald-950\/20{background:#d8b5ff!important;color:#111!important;border-color:#111!important}
+main .bg-rose-500\/10{background:#ff9848!important;color:#111!important;border-color:#111!important}
+main .bg-slate-950{border-color:#111!important}
+main .border-dashed{border-style:dashed!important;border-color:#111!important}
+main .text-transparent{color:#111!important;background:none!important;-webkit-text-fill-color:#111!important}
+.orchestra-footer{background:#f5efdf!important;border-top:2px solid #111!important;color:#111!important}
+.orchestra-footer .footer-links{color:#49463f!important}
+@media(max-width:900px){header.sticky .max-w-7xl{flex-wrap:wrap}header.sticky nav{flex-wrap:wrap}}
+@media(max-width:640px){header.sticky{padding-left:12px!important;padding-right:12px!important}header.sticky .max-w-7xl{align-items:flex-start}header.sticky nav{width:100%}}
