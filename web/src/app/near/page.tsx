@@ -122,18 +122,6 @@ export default function NearEconomyPage() {
           setNear(null);
           setNotice('Wallet disconnected.');
         });
-        // Restore an existing wallet session when the connector has one.
-        try {
-          const wallet = await instance.wallet();
-          const accounts = await wallet.getAccounts();
-          const restoredId = accounts?.[0]?.accountId || '';
-          if (active && restoredId) {
-            setAccountId(restoredId);
-            setNear(new Near({ network: 'testnet', wallet: fromHotConnect(instance) }));
-          }
-        } catch {
-          // No saved wallet session; the user can connect manually.
-        }
         if (active) {
           setNear(new Near({ network: 'testnet' }));
           setConnector(instance);
@@ -416,8 +404,8 @@ export default function NearEconomyPage() {
 
         <section className="rounded-2xl border border-slate-800 p-5 text-sm text-slate-400">
           <strong className="text-white">Trust boundary:</strong> NEAR records agent ownership, buyer, task hash, payment and provider completion status.
-          Buyers can leave one immutable 1–5 rating per completed job, and the contract aggregates ratings and completed-job counts.
-          Ratings are buyer attestations, not independent quality verification. The provider's completion flag is also a provider assertion.
+          The provider adapter verifies the job and task digest, executes the provider's own runtime, and submits a result digest.
+          Buyers can leave one immutable 1–5 rating per completed job. Result digests and ratings are attestations, not independent proof that work is correct.
         </section>
       </div>
     </main>
