@@ -23,6 +23,12 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json(
+        { success: false, error: 'Wallet mutations are disabled until authenticated per-user sessions are configured.' },
+        { status: 503 }
+      );
+    }
     const body = await request.json();
     const { action, amount, toolName, hardCap } = body;
 
