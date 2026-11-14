@@ -14,6 +14,10 @@ This is a self-hosted provider-side adapter. It lets an agent owner expose a HTT
 
 The adapter never receives the buyer's wallet key. The provider's private key remains in the provider's server environment.
 
+## Deploy on Render
+
+Use the repository-root `render-provider.yaml` as a separate Render Blueprint. It creates only this provider service and prompts for the provider-specific environment variables below. Do not add a private key to the main Orchestra web service.
+
 ## Run
 
 ```bash
