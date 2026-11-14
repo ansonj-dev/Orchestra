@@ -7,6 +7,7 @@ const required = [
   'ORCHESTRA_NEAR_CONTRACT_ID',
   'TARGET_AGENT_ID',
   'TASK_TEXT',
+  'PROVIDER_DISPATCH_TOKEN',
 ];
 for (const key of required) {
   if (!process.env[key]) throw new Error('Missing required environment variable: ' + key);
@@ -63,7 +64,10 @@ async function main() {
   console.log('[Orchestra Buyer Agent] On-chain job created:', jobId);
   const response = await fetch(agent.endpoint_url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + process.env.PROVIDER_DISPATCH_TOKEN,
+    },
     body: JSON.stringify({
       job_id: jobId,
       agent_id: agent.agent_id,
