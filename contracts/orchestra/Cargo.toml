@@ -17,3 +17,6 @@ lto = true
 debug = false
 panic = "abort"
 overflow-checks = true
+
+[dev-dependencies]
+near-sdk = { version = "5.17.2", features = ["legacy", "unit-testing"] }
