@@ -12,6 +12,7 @@ type Job = {
   status: string;
   created_at: number;
   completed_at: number | null;
+  rated: boolean;
 };
 
 type Agent = {
@@ -22,6 +23,10 @@ type Agent = {
   price_yocto: string;
   active: boolean;
   registered_at: number;
+  rating_sum: number;
+  rating_count: number;
+  completed_jobs: number;
+  total_earned_yocto: string;
 };
 
 const CONTRACT_ID = process.env.NEXT_PUBLIC_ORCHESTRA_NEAR_CONTRACT_ID || '';
@@ -64,6 +69,7 @@ export default function NearEconomyPage() {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('0.01');
   const [task, setTask] = useState('Run a sample research task and return a structured result.');
+  const [rating, setRating] = useState('5');
 
   const refreshJobs = useCallback(async () => {
     if (!near || !CONTRACT_ID) return;
@@ -205,6 +211,23 @@ export default function NearEconomyPage() {
     }
   };
 
+  const rateJob = async (jobId: number) => {
+    if (!near || !CONTRACT_ID) return;
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      await near.call(CONTRACT_ID, 'rate_job', { job_id: jobId, rating: Number(rating) });
+      setNotice('Your agent rating was submitted to NEAR testnet.');
+      await refreshJobs();
+      await refreshAgents();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not submit the agent rating.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const completeJob = async (jobId: number) => {
     if (!near || !CONTRACT_ID) return;
     setBusy(true);
@@ -294,6 +317,10 @@ export default function NearEconomyPage() {
                       <h3 className="font-bold text-white">{agent.name}</h3>
                       <p className="mt-1 text-sm text-slate-400">{agent.description}</p>
                       <p className="mt-2 text-xs text-slate-500">Provider: {agent.owner}</p>
+                      <p className="mt-1 text-xs text-amber-300">
+                        {agent.rating_count > 0 ? '★ ' + (agent.rating_sum / agent.rating_count).toFixed(1) + ' / 5 · ' + agent.rating_count + ' ratings' : 'New agent · no ratings yet'}
+                        {' · '}{agent.completed_jobs} completed jobs
+                      </p>
                     </div>
                     <div className="text-right">
                       <div className="font-mono font-bold text-emerald-300">{yoctoToNear(agent.price_yocto)} NEAR</div>
@@ -331,6 +358,19 @@ export default function NearEconomyPage() {
                     {accountId === job.provider && job.status === 'PAID' && (
                       <button onClick={() => completeJob(job.id)} disabled={busy} className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-bold text-slate-950 disabled:opacity-40">Mark complete</button>
                     )}
+                    {accountId === job.buyer && job.status === 'COMPLETED' && !job.rated && (
+                      <div className="flex items-center gap-2">
+                        <select value={rating} onChange={e => setRating(e.target.value)} className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-2 text-xs text-white">
+                          <option value="5">5 ★</option>
+                          <option value="4">4 ★</option>
+                          <option value="3">3 ★</option>
+                          <option value="2">2 ★</option>
+                          <option value="1">1 ★</option>
+                        </select>
+                        <button onClick={() => rateJob(job.id)} disabled={busy} className="rounded-lg border border-amber-700 px-3 py-2 text-xs font-bold text-amber-300 disabled:opacity-40">Rate</button>
+                      </div>
+                    )}
+                    {job.rated && <span className="text-xs text-slate-500">Rated</span>}
                   </div>
                 </article>
               ))}
