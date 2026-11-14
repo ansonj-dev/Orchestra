@@ -131,7 +131,10 @@ export default function NearEconomyPage() {
         } catch {
           // No saved wallet session; the user can connect manually.
         }
-        if (active) setConnector(instance);
+        if (active) {
+          setNear(new Near({ network: 'testnet' }));
+          setConnector(instance);
+        }
       } catch (e) {
         if (active) setError(e instanceof Error ? e.message : 'Could not initialize NEAR Connect.');
       }
