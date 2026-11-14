@@ -1,5 +1,14 @@
 # Orchestra 🎻
 
+> [!WARNING]
+> **NEAR hackathon upgrade branch — work in progress.** This branch contains safety fixes and is not yet a production-ready agent economy or NEAR integration.
+>
+> - Production billing, wallet mutations, and marketplace mutations are deliberately disabled until authenticated per-user sessions are implemented.
+> - Tool integrity checks fail closed unless trusted SHA-256 fingerprints are configured with `ORCHESTRA_CERTIFIED_TOOL_HASHES`.
+> - The evaluation endpoint performs limited static checks only; it does not execute tools in a sandbox or grant certification.
+> - Browser-local WebMCP execution is not available through the remote MCP endpoint. Unsupported tools return errors rather than fabricated success.
+> - NEAR wallet, contract, and settlement integration has **not** been implemented yet.
+
 > **Deterministic, Client-Side Runtime Marketplace for Credit-Metered AI Agent Utilities**
 > 
 > *Built specifically for the [WebMCP Devpost Challenge](https://webmcp.devpost.com/) (Google Chrome & OpenAI)*
@@ -154,7 +163,9 @@ console.log("Result:", result);
 ```bash
 # 1. Clone repository
 git clone https://github.com/ansonj-dev/Orchestra.git
-cd Orchestra/web
+cd Orchestra
+git checkout near-hackathon-upgrade
+cd web
 
 # 2. Install dependencies
 npm install
