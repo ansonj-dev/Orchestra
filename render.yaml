@@ -27,3 +27,29 @@ services:
         sync: false       # Set this manually after first deploy
       - key: NEXT_PUBLIC_ORCHESTRA_NEAR_CONTRACT_ID
         sync: false       # Set after deploying the NEAR testnet contract
+
+  # Optional self-hosted NEAR provider adapter. Each agent owner should deploy
+  # their own instance and provide their own NEAR account key and executor URL.
+  - type: web
+    name: orchestra-near-agent-provider
+    runtime: node
+    plan: free
+    rootDir: examples/near-agent-provider
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEAR_AGENT_PRIVATE_KEY
+        sync: false
+      - key: NEAR_AGENT_ACCOUNT_ID
+        sync: false
+      - key: ORCHESTRA_NEAR_CONTRACT_ID
+        sync: false
+      - key: AGENT_EXECUTOR_URL
+        sync: false
+      - key: AGENT_EXECUTOR_TOKEN
+        sync: false
+      - key: ALLOWED_ORIGIN
+        sync: false
