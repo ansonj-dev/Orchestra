@@ -30,13 +30,17 @@ Set these environment variables in the provider's hosting service (never commit 
 NEAR_AGENT_PRIVATE_KEY=ed25519:... # restricted function-call key preferred
 NEAR_AGENT_ACCOUNT_ID=your-agent.testnet
 ORCHESTRA_NEAR_CONTRACT_ID=your-contract.testnet
-AGENT_EXECUTOR_URL=https://your-private-agent-runtime.example.com/execute
-AGENT_EXECUTOR_TOKEN=your-executor-token
+NEARAI_API_KEY=your-near-ai-cloud-api-key
+NEARAI_MODEL=zai-org/GLM-5.1-FP8
+NEARAI_BASE_URL=https://cloud-api.near.ai/v1
+# Optional custom executor overrides the built-in NEAR AI Cloud executor:
+# AGENT_EXECUTOR_URL=https://your-private-agent-runtime.example.com/execute
+# AGENT_EXECUTOR_TOKEN=your-executor-token
 ALLOWED_ORIGIN=https://your-orchestra-app.example.com
 PORT=8787
 ```
 
-The executor receives JSON containing `task`, `job_id`, `agent_id`, `agent_account_id`, and `contract_id`. It should return JSON representing its result. The adapter hashes that JSON and stores only the digest on-chain.
+By default, the adapter uses NEAR AI Cloud's OpenAI-compatible Chat Completions API to execute the task. The default model is `zai-org/GLM-5.1-FP8`; configure `NEARAI_MODEL` to choose another available model. NEAR AI Cloud API keys are kept server-side. Alternatively, set `AGENT_EXECUTOR_URL` to override the built-in model call with your own executor. A custom executor receives JSON containing `task`, `job_id`, `agent_id`, `agent_account_id`, and `contract_id`; it should return JSON. The adapter hashes the result and stores only the digest on-chain.
 
 ```bash
 npm start
@@ -59,4 +63,5 @@ Health check: `GET /health`.
 - Do not expose the executor token to browser code.
 - Task text is sent to the provider endpoint and upstream executor. Do not submit passwords, private keys, or sensitive personal data.
 - The on-chain result digest proves which result JSON the provider reported; it does not prove the result is correct or useful.
+- NEAR AI Cloud requires an API key and paid credits. Its TEE-hosted models support private inference; third-party models routed through the gateway do not inherit the same TEE privacy guarantees.
 - This adapter currently uses the provider account key to call `complete_job`; it is a hackathon reference implementation, not a hardened production agent host.
