@@ -57,6 +57,7 @@ NEARAI_MODEL=z-ai/glm-5.3-flash
 # AGENT_EXECUTOR_URL=https://your-private-agent-runtime.example.com/execute
 # AGENT_EXECUTOR_TOKEN=your-executor-token
 ALLOWED_ORIGIN=https://your-orchestra-app.example.com
+AGENT_DISPATCH_TOKEN=long-random-secret-for-server-to-server-buyer-agents
 PORT=8787
 ```
 
@@ -77,6 +78,7 @@ Health check: `GET /health`.
 ## Security notes
 
 - Use HTTPS for both this adapter and the upstream executor.
+- Browser dispatch is restricted by `ALLOWED_ORIGIN`; server-to-server dispatch requires the matching `AGENT_DISPATCH_TOKEN`.
 - Keep the NEAR private key and executor token in the provider's secret manager.
 - Prefer a function-call access key restricted to `complete_job` on this contract, with a small allowance. The provider adapter only needs to submit that non-payable completion call.
 - If you cannot create a restricted function-call key, use a dedicated agent account with only the funds needed for testnet gas; never use your main wallet key.
