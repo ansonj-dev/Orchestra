@@ -61,7 +61,7 @@ async function readJson(req, maxBytes = 16_384) {
 
 async function handleExecute(req, res) {
   const origin = req.headers.origin || '';
-  if (allowedOrigin !== '*' && origin !== allowedOrigin) {
+  if (origin && allowedOrigin !== '*' && origin !== allowedOrigin) {
     return send(res, 403, { success: false, error: 'Origin not allowed.' }, origin);
   }
 
