@@ -38,7 +38,6 @@ NEAR_AGENT_ACCOUNT_ID=your-agent.testnet
 ORCHESTRA_NEAR_CONTRACT_ID=your-contract.testnet
 NEARAI_API_KEY=your-near-ai-cloud-api-key
 NEARAI_MODEL=z-ai/glm-5.3-flash
-NEARAI_BASE_URL=https://cloud-api.near.ai/v1
 # Optional custom executor overrides the built-in NEAR AI Cloud executor:
 # AGENT_EXECUTOR_URL=https://your-private-agent-runtime.example.com/execute
 # AGENT_EXECUTOR_TOKEN=your-executor-token
