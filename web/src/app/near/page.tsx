@@ -73,6 +73,7 @@ export default function NearEconomyPage() {
   const [price, setPrice] = useState('0.01');
   const [task, setTask] = useState('Run a sample research task and return a structured result.');
   const [rating, setRating] = useState('5');
+  const [consentToDispatch, setConsentToDispatch] = useState(false);
 
   const refreshJobs = useCallback(async () => {
     if (!near || !CONTRACT_ID) return;
@@ -309,6 +310,10 @@ export default function NearEconomyPage() {
             </div>
             <textarea value={task} onChange={e => setTask(e.target.value)} rows={3} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-cyan-500" />
             <p className="text-xs text-slate-500">Only a SHA-256 task hash is stored on-chain. If the provider has an HTTPS endpoint, the full task text is sent directly to that endpoint after your wallet approves payment. Do not include secrets.</p>
+            <label className="flex items-start gap-2 text-xs text-slate-400">
+              <input type="checkbox" checked={consentToDispatch} onChange={e => setConsentToDispatch(e.target.checked)} className="mt-0.5 accent-cyan-500" />
+              I understand that the task text will be sent to the selected provider's endpoint for execution.
+            </label>
             <div className="text-sm text-slate-400">On-chain listings: <strong className="text-white">{agents.length}</strong></div>
             <button onClick={refreshAgents} disabled={!near || loading} className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 disabled:opacity-40">{loading ? 'Refreshing…' : 'Refresh listings'}</button>
             <div className="space-y-3">
@@ -331,7 +336,7 @@ export default function NearEconomyPage() {
                     </div>
                     <div className="text-right">
                       <div className="font-mono font-bold text-emerald-300">{yoctoToNear(agent.price_yocto)} NEAR</div>
-                      <button onClick={() => hireAgent(agent)} disabled={!accountId || !CONTRACT_ID || busy || !agent.active || agent.owner === accountId} className="mt-2 rounded-lg bg-cyan-500 px-3 py-2 text-xs font-bold text-slate-950 disabled:opacity-40">Hire</button>
+                      <button onClick={() => hireAgent(agent)} disabled={!accountId || !CONTRACT_ID || busy || !agent.active || agent.owner === accountId || (!!agent.endpoint_url && !consentToDispatch)} className="mt-2 rounded-lg bg-cyan-500 px-3 py-2 text-xs font-bold text-slate-950 disabled:opacity-40">Hire</button>
                     </div>
                   </div>
                 </article>
