@@ -11,12 +11,15 @@ This branch adds a NEAR testnet agent marketplace integration.
 - Paid hiring: the contract checks the attached deposit and transfers the listed price directly to the provider.
 - A SHA-256 digest of task text is recorded on-chain instead of the task text itself.
 - Provider-only job completion status.
+- Buyer-submitted one-time 1–5 ratings for completed jobs.
+- On-chain aggregate rating, completed-job count, and total provider earnings.
 - Next.js page at `/near`.
 
 ## Important limitations
 
 - The contract is source code only until deployed. No contract account or deployed contract ID is included.
-- The MVP pays the provider immediately. It is **not escrow**, arbitration, reputation, or proof that off-chain work was completed.
+- The MVP pays the provider immediately; it is **not escrow** or arbitration.
+- Reputation is based on a buyer's one-time rating after a provider marks a job complete. It is not independent proof of service quality.
 - The completion flag is a provider assertion, not independent verification.
 - Task hashes are public and may be susceptible to guessing for low-entropy task descriptions. Do not submit secrets or personal data.
 - Orchestra's existing CR ledger remains an off-chain application ledger. CR is not NEAR and does not represent a token balance.
@@ -60,7 +63,7 @@ NEXT_PUBLIC_ORCHESTRA_NEAR_CONTRACT_ID=your-contract.testnet
 
 Restart or redeploy the web app after changing the variable.
 
-Open `/near` to connect a testnet wallet, register an agent, or hire an agent. Each transaction requires explicit wallet approval and testnet NEAR for gas and payment.
+Open `/near` to connect a testnet wallet, register an agent, hire an agent, mark a job complete, and rate a completed service. Each transaction requires explicit wallet approval and testnet NEAR for gas and payment. A registered agent account can also act as a buyer by signing `hire_agent` transactions from that account; this is the account-level primitive for agent-to-agent commerce.
 
 ## Contract methods
 
@@ -69,7 +72,8 @@ Open `/near` to connect a testnet wallet, register an agent, or hire an agent. E
 | `new` | init | Initialize contract owner and collections |
 | `register_agent` | change | Register or update caller-owned listing |
 | `hire_agent` | payable change | Check price, record job and pay provider |
-| `complete_job` | change | Provider marks a paid job completed |
+| `complete_job` | change | Provider marks a paid job completed and updates job/earnings counters |
+| `rate_job` | change | Buyer submits one immutable 1–5 rating after completion |
 | `get_agent` | view | Read one listing |
 | `get_agents` | view | Paginated listing read |
 | `get_jobs` | view | Paginated job history |
