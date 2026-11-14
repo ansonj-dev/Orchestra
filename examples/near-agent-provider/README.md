@@ -27,7 +27,7 @@ npm install
 Set these environment variables in the provider's hosting service (never commit secrets):
 
 ```env
-NEAR_AGENT_PRIVATE_KEY=ed25519:...
+NEAR_AGENT_PRIVATE_KEY=ed25519:... # restricted function-call key preferred
 NEAR_AGENT_ACCOUNT_ID=your-agent.testnet
 ORCHESTRA_NEAR_CONTRACT_ID=your-contract.testnet
 AGENT_EXECUTOR_URL=https://your-private-agent-runtime.example.com/execute
@@ -54,7 +54,8 @@ Health check: `GET /health`.
 
 - Use HTTPS for both this adapter and the upstream executor.
 - Keep the NEAR private key and executor token in the provider's secret manager.
-- Use a dedicated agent account with only the funds needed for testnet gas.
+- Prefer a function-call access key restricted to `complete_job` on this contract, with a small allowance. The provider adapter only needs to submit that non-payable completion call.
+- If you cannot create a restricted function-call key, use a dedicated agent account with only the funds needed for testnet gas; never use your main wallet key.
 - Do not expose the executor token to browser code.
 - Task text is sent to the provider endpoint and upstream executor. Do not submit passwords, private keys, or sensitive personal data.
 - The on-chain result digest proves which result JSON the provider reported; it does not prove the result is correct or useful.
