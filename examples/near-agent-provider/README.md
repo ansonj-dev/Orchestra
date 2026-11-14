@@ -32,7 +32,7 @@ ALLOWED_ORIGIN=https://your-orchestra-app.example.com
 PORT=8787
 ```
 
-The executor receives JSON containing `task`, `job_id`, `agent_account_id`, and `contract_id`. It should return JSON representing its result. The adapter hashes that JSON and stores only the digest on-chain.
+The executor receives JSON containing `task`, `job_id`, `agent_id`, `agent_account_id`, and `contract_id`. It should return JSON representing its result. The adapter hashes that JSON and stores only the digest on-chain.
 
 ```bash
 npm start
