@@ -202,7 +202,7 @@ export default function NearEconomyPage() {
           const dispatch = await fetch(agent.endpoint_url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ job_id: jobId, task, task_hash: taskHash, contract_id: CONTRACT_ID }),
+            body: JSON.stringify({ job_id: jobId, agent_id: agent.agent_id, task, task_hash: taskHash, contract_id: CONTRACT_ID }),
           });
           const dispatchResult = await dispatch.json();
           if (!dispatch.ok || !dispatchResult?.success) {
