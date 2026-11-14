@@ -32,20 +32,23 @@ npm install
 
 ## Build the Rust contract
 
-Install Rust and the NEAR contract build toolchain (cargo-near and the wasm target) using the current official NEAR instructions. Then:
+Install Rust and cargo-near using the [official cargo-near instructions](https://github.com/near/cargo-near). From the repository root:
 
 ```bash
 cd contracts/orchestra
-cargo near build
+cargo near build non-reproducible-wasm
 ```
 
-Use the current NEAR CLI deployment flow to deploy the generated WASM to a dedicated testnet account and initialize it with:
+Create or select a testnet account that you control and that has enough testnet NEAR for storage and gas. Deploy and initialize in one transaction (replace both account placeholders):
 
-```json
-{"owner":"YOUR_ACCOUNT.testnet"}
+```bash
+cargo near deploy build-non-reproducible-wasm YOUR_CONTRACT.testnet \
+  with-init-call new json-args '{"owner":"YOUR_OWNER.testnet"}' \
+  prepaid-gas '100.0 Tgas' attached-deposit '0 NEAR' \
+  network-config testnet sign-with-keychain send
 ```
 
-Only deploy to an account you control.
+The command uses the local keychain for signing; it does not require putting a private key in the repository. The official cargo-near tool supports both build and guided deployment flows.
 
 ## Configure the web app
 
