@@ -8,6 +8,7 @@ type Job = {
   buyer: string;
   provider: string;
   task_hash: string;
+  result_hash: string | null;
   price_yocto: string;
   status: string;
   created_at: number;
@@ -20,6 +21,7 @@ type Agent = {
   owner: string;
   name: string;
   description: string;
+  endpoint_url: string;
   price_yocto: string;
   active: boolean;
   registered_at: number;
@@ -67,6 +69,7 @@ export default function NearEconomyPage() {
   const [error, setError] = useState('');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [endpointUrl, setEndpointUrl] = useState('');
   const [price, setPrice] = useState('0.01');
   const [task, setTask] = useState('Run a sample research task and return a structured result.');
   const [rating, setRating] = useState('5');
@@ -181,6 +184,7 @@ export default function NearEconomyPage() {
         name: name.trim(),
         description: description.trim(),
         price_yocto: nearToYocto(price),
+        endpoint_url: endpointUrl.trim(),
       });
       setNotice('Agent registration transaction submitted to NEAR testnet.');
       await refreshAgents();
@@ -200,11 +204,30 @@ export default function NearEconomyPage() {
     try {
       // Only the SHA-256 digest is written on-chain. Keep private task details off-chain.
       const taskHash = await sha256(task);
-      await near.call(CONTRACT_ID, 'hire_agent', {
+      const created = await near.call(CONTRACT_ID, 'hire_agent', {
         agent_id: agent.agent_id,
         task_hash: taskHash,
       }, { attachedDeposit: yoctoToNear(agent.price_yocto) + ' NEAR' });
-      setNotice('Hire transaction submitted. ' + yoctoToNear(agent.price_yocto) + ' NEAR is paid directly to the provider by the contract.');
+      const jobId = Number((created as any)?.id);
+      if (agent.endpoint_url && Number.isSafeInteger(jobId)) {
+        try {
+          const dispatch = await fetch(agent.endpoint_url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ job_id: jobId, task, task_hash: taskHash, contract_id: CONTRACT_ID }),
+          });
+          const dispatchResult = await dispatch.json();
+          if (!dispatch.ok || !dispatchResult?.success) {
+            setNotice('Job #' + jobId + ' was paid on NEAR, but the provider endpoint did not complete dispatch: ' + (dispatchResult?.error || dispatch.statusText));
+          } else {
+            setNotice('Job #' + jobId + ' paid and dispatched. Provider receipt: ' + (dispatchResult.result_hash || 'submitted'));
+          }
+        } catch (dispatchError) {
+          setNotice('Job #' + jobId + ' was paid on NEAR, but the provider endpoint could not be reached. The on-chain job remains available for retry.');
+        }
+      } else {
+        setNotice('Hire transaction submitted. ' + yoctoToNear(agent.price_yocto) + ' NEAR was paid to the provider. No execution endpoint is configured for this listing.');
+      }
       await refreshAgents();
       await refreshJobs();
     } catch (e) {
@@ -237,7 +260,8 @@ export default function NearEconomyPage() {
     setError('');
     setNotice('');
     try {
-      await near.call(CONTRACT_ID, 'complete_job', { job_id: jobId });
+      const resultHash = await sha256('Provider completion receipt for Orchestra job ' + jobId);
+      await near.call(CONTRACT_ID, 'complete_job', { job_id: jobId, result_hash: resultHash });
       setNotice('Job completion transaction submitted to NEAR testnet.');
       await refreshJobs();
     } catch (e) {
@@ -295,6 +319,10 @@ export default function NearEconomyPage() {
             </div>
             <input required maxLength={80} value={name} onChange={e => setName(e.target.value)} placeholder="Agent name" className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-500" />
             <textarea required maxLength={500} value={description} onChange={e => setDescription(e.target.value)} placeholder="What does this agent do?" rows={3} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-500" />
+            <label className="block text-sm text-slate-400">HTTPS agent execution endpoint
+              <input value={endpointUrl} onChange={e => setEndpointUrl(e.target.value)} type="url" placeholder="https://your-agent.example.com/v1/execute" className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500" />
+              <span className="mt-1 block text-xs text-slate-500">Optional. When configured, hiring sends the task to this provider-owned endpoint.</span>
+            </label>
             <label className="block text-sm text-slate-400">Price per job (NEAR)
               <input required value={price} onChange={e => setPrice(e.target.value)} inputMode="decimal" className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500" />
             </label>
@@ -308,7 +336,7 @@ export default function NearEconomyPage() {
               <p className="mt-1 text-sm text-slate-400">Your wallet asks you to approve the listed price plus network gas.</p>
             </div>
             <textarea value={task} onChange={e => setTask(e.target.value)} rows={3} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-cyan-500" />
-            <p className="text-xs text-slate-500">Only a SHA-256 hash of this task text is submitted on-chain. Do not include secrets.</p>
+            <p className="text-xs text-slate-500">Only a SHA-256 task hash is stored on-chain. If the provider has an HTTPS endpoint, the full task text is sent directly to that endpoint after your wallet approves payment. Do not include secrets.</p>
             <div className="text-sm text-slate-400">On-chain listings: <strong className="text-white">{agents.length}</strong></div>
             <button onClick={refreshAgents} disabled={!near || loading} className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 disabled:opacity-40">{loading ? 'Refreshing…' : 'Refresh listings'}</button>
             <div className="space-y-3">
@@ -320,6 +348,7 @@ export default function NearEconomyPage() {
                       <h3 className="font-bold text-white">{agent.name}</h3>
                       <p className="mt-1 text-sm text-slate-400">{agent.description}</p>
                       <p className="mt-2 text-xs text-slate-500">Provider: {agent.owner}</p>
+                      <p className="mt-1 text-xs text-cyan-300 break-all">{agent.endpoint_url || 'No execution endpoint configured'}</p>
                       <p className="mt-1 text-xs text-amber-300">
                         {agent.rating_count > 0 ? '★ ' + (agent.rating_sum / agent.rating_count).toFixed(1) + ' / 5 · ' + agent.rating_count + ' ratings' : 'New agent · no ratings yet'}
                         {' · '}{agent.completed_jobs} completed jobs
@@ -358,6 +387,7 @@ export default function NearEconomyPage() {
                     <div className="font-mono text-xs text-slate-500">JOB #{job.id} · {job.agent_id}</div>
                     <div className="mt-1 text-sm text-slate-300">Buyer: {job.buyer} · Provider: {job.provider}</div>
                     <div className="mt-1 break-all text-xs text-slate-500">Task digest: {job.task_hash}</div>
+                    {job.result_hash && <div className="mt-1 break-all text-xs text-emerald-300">Result digest: {job.result_hash}</div>}
                   </div>
                   <div className="flex items-center gap-3">
                     <span className={job.status === 'COMPLETED' ? 'text-xs font-bold text-emerald-300' : 'text-xs font-bold text-amber-300'}>{job.status}</span>
