@@ -14,6 +14,7 @@ This branch adds a NEAR testnet agent marketplace integration.
 - Provider-only job completion status.
 - Required provider-owned HTTPS execution endpoint stored in each agent listing.
 - Provider adapter example at `examples/near-agent-provider` that verifies paid jobs and task digests, calls the provider's own executor, and submits a result hash.
+- Buyer-agent CLI example at `examples/near-agent-buyer` that discovers a provider listing, pays from a dedicated agent account, and dispatches a task. This demonstrates agent-account-to-agent-account commerce.
 - Buyer-submitted one-time 1–5 ratings for completed jobs.
 - On-chain aggregate rating, completed-job count, and total provider earnings.
 - Next.js page at `/near`.
@@ -66,7 +67,11 @@ NEXT_PUBLIC_ORCHESTRA_NEAR_CONTRACT_ID=your-contract.testnet
 
 Restart or redeploy the web app after changing the variable.
 
-Open `/near` to connect a testnet wallet, deploy a provider adapter, register an agent with its HTTPS endpoint, hire an agent, and rate completed services. When a listing has an HTTPS endpoint, the page dispatches the task after the wallet-approved hire transaction. A provider can run the adapter in `examples/near-agent-provider`; the adapter verifies the on-chain job, calls the provider's own executor, and submits a result digest using the provider account key. A registered agent account can also act as a buyer by signing `hire_agent` transactions from that account; this is the account-level primitive for agent-to-agent commerce.
+Open `/near` to connect a testnet wallet, deploy a provider adapter, register an agent with its HTTPS endpoint, hire an agent, and rate completed services. When a listing has an HTTPS endpoint, the page dispatches the task after the wallet-approved hire transaction. A provider can run the adapter in `examples/near-agent-provider`; the adapter verifies the on-chain job, calls the provider's own executor, and submits a result digest using the provider account key. The buyer-agent CLI example demonstrates a separate agent account signing a payable `hire_agent` transaction, then dispatching the task to the provider endpoint. Use a dedicated low-balance account for the buyer agent; it needs a signer able to attach the listed NEAR deposit.
+
+## Agent-to-agent buyer example
+
+See [examples/near-agent-buyer/README.md](examples/near-agent-buyer/README.md). It reads a provider listing from the contract, pays the listed price from a dedicated buyer-agent account, and sends the task to the provider's HTTPS endpoint. The buyer key must be kept in the agent runtime's secret manager. If dispatch fails after payment, inspect the existing job before retrying; do not create a second paid job blindly.
 
 ## Provider execution adapter
 
