@@ -23,6 +23,10 @@ pub struct Agent {
     pub price_yocto: U128,
     pub active: bool,
     pub registered_at: u64,
+    pub rating_sum: u64,
+    pub rating_count: u64,
+    pub completed_jobs: u64,
+    pub total_earned_yocto: U128,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]
@@ -37,6 +41,7 @@ pub struct Job {
     pub status: String,
     pub created_at: u64,
     pub completed_at: Option<u64>,
+    pub rated: bool,
 }
 
 #[near(contract_state)]
@@ -74,11 +79,17 @@ impl OrchestraContract {
             self.agents.insert(agent_id.clone(), Agent {
                 agent_id, owner: caller, name, description, price_yocto,
                 active: true, registered_at,
+                rating_sum: existing.rating_sum,
+                rating_count: existing.rating_count,
+                completed_jobs: existing.completed_jobs,
+                total_earned_yocto: existing.total_earned_yocto,
             });
         } else {
             let agent = Agent {
                 agent_id: agent_id.clone(), owner: caller, name, description,
                 price_yocto, active: true, registered_at: env::block_timestamp(),
+                rating_sum: 0, rating_count: 0, completed_jobs: 0,
+                total_earned_yocto: U128(0),
             };
             self.agent_ids.push(&agent_id);
             self.agents.insert(agent_id, agent);
@@ -103,7 +114,7 @@ impl OrchestraContract {
         let job = Job {
             id: self.jobs.len(), agent_id, buyer, provider: agent.owner.clone(),
             task_hash, price_yocto: U128(price), status: "PAID".to_string(),
-            created_at: env::block_timestamp(), completed_at: None,
+            created_at: env::block_timestamp(), completed_at: None, rated: false,
         };
         self.jobs.push(&job);
 
@@ -122,6 +133,26 @@ impl OrchestraContract {
         require!(job.status == "PAID", "Job is not awaiting completion");
         job.status = "COMPLETED".to_string();
         job.completed_at = Some(env::block_timestamp());
+        let mut agent = self.agents.get(&job.agent_id).expect("Agent not found").clone();
+        agent.completed_jobs = agent.completed_jobs.saturating_add(1);
+        agent.total_earned_yocto = U128(agent.total_earned_yocto.0.saturating_add(job.price_yocto.0));
+        self.agents.insert(job.agent_id.clone(), agent);
+        self.jobs.replace(job_id, &job);
+    }
+
+    /// Buyer can leave one immutable 1-5 rating after the provider marks the job complete.
+    pub fn rate_job(&mut self, job_id: u64, rating: u8) {
+        require!((1..=5).contains(&rating), "Rating must be between 1 and 5");
+        let mut job = self.jobs.get(job_id).expect("Job not found");
+        require!(job.buyer == env::predecessor_account_id(), "Only the buyer can rate this job");
+        require!(job.status == "COMPLETED", "Only completed jobs can be rated");
+        require!(!job.rated, "This job has already been rated");
+
+        let mut agent = self.agents.get(&job.agent_id).expect("Agent not found").clone();
+        agent.rating_sum = agent.rating_sum.saturating_add(rating as u64);
+        agent.rating_count = agent.rating_count.saturating_add(1);
+        self.agents.insert(job.agent_id.clone(), agent);
+        job.rated = true;
         self.jobs.replace(job_id, &job);
     }
 
