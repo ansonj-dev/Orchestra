@@ -71,6 +71,8 @@ export default function NearEconomyPage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [endpointUrl, setEndpointUrl] = useState('');
+  const [endpointHealthy, setEndpointHealthy] = useState(false);
+  const [endpointStatus, setEndpointStatus] = useState('');
   const [price, setPrice] = useState('0.01');
   const [task, setTask] = useState('Run a sample research task and return a structured result.');
   const [rating, setRating] = useState('5');
@@ -170,6 +172,30 @@ export default function NearEconomyPage() {
       await connector?.disconnect();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Wallet disconnect failed.');
+    }
+  };
+
+  const checkEndpoint = async () => {
+    setEndpointHealthy(false);
+    setEndpointStatus('');
+    setError('');
+    try {
+      const healthUrl = new URL(endpointUrl);
+      if (healthUrl.protocol !== 'https:') throw new Error('Provider endpoint must use HTTPS.');
+      healthUrl.pathname = '/health';
+      healthUrl.search = '';
+      healthUrl.hash = '';
+      const response = await fetch(healthUrl.toString(), { cache: 'no-store' });
+      const health = await response.json();
+      if (!response.ok || !health?.success) throw new Error('Provider health check failed.');
+      if (health.account_id !== accountId) {
+        throw new Error('Endpoint account ' + health.account_id + ' does not match connected wallet ' + accountId + '.');
+      }
+      if (health.network !== 'testnet') throw new Error('Provider endpoint is not configured for NEAR testnet.');
+      setEndpointHealthy(true);
+      setEndpointStatus('Online and bound to ' + accountId);
+    } catch (e) {
+      setEndpointStatus(e instanceof Error ? e.message : 'Could not verify provider endpoint.');
     }
   };
 
@@ -393,13 +419,13 @@ export default function NearEconomyPage() {
             <input required maxLength={80} value={name} onChange={e => setName(e.target.value)} placeholder="Agent name" className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-500" />
             <textarea required maxLength={500} value={description} onChange={e => setDescription(e.target.value)} placeholder="What does this agent do?" rows={3} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-500" />
             <label className="block text-sm text-slate-400">HTTPS agent execution endpoint
-              <input value={endpointUrl} onChange={e => setEndpointUrl(e.target.value)} type="url" required maxLength={300} placeholder="https://your-agent.example.com/v1/execute" className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500" />
+              <input value={endpointUrl} onChange={e => { setEndpointUrl(e.target.value); setEndpointHealthy(false); setEndpointStatus(''); }} type="url" required maxLength={300} placeholder="https://your-agent.example.com/v1/execute" className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500" />
               <span className="mt-1 block text-xs text-slate-500">Optional. When configured, hiring sends the task to this provider-owned endpoint.</span>
             </label>
             <label className="block text-sm text-slate-400">Price per job (NEAR)
               <input required value={price} onChange={e => setPrice(e.target.value)} inputMode="decimal" className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500" />
             </label>
-            <button disabled={!accountId || !CONTRACT_ID || busy} className="w-full rounded-xl bg-emerald-500 px-4 py-3 text-sm font-bold text-slate-950 disabled:opacity-40">{busy ? 'Please wait…' : 'Register on NEAR'}</button>
+            <button disabled={!accountId || !CONTRACT_ID || busy || !endpointHealthy} className="w-full rounded-xl bg-emerald-500 px-4 py-3 text-sm font-bold text-slate-950 disabled:opacity-40">{busy ? 'Please wait…' : 'Register on NEAR'}</button>
           </form>
 
           <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
