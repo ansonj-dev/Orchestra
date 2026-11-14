@@ -70,9 +70,10 @@ impl OrchestraContract {
 
         if let Some(existing) = self.agents.get(&agent_id) {
             require!(existing.owner == caller, "Only the listing owner can update it");
+            let registered_at = existing.registered_at;
             self.agents.insert(agent_id.clone(), Agent {
                 agent_id, owner: caller, name, description, price_yocto,
-                active: true, registered_at: existing.registered_at,
+                active: true, registered_at,
             });
         } else {
             let agent = Agent {
