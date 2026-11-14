@@ -222,10 +222,11 @@ This branch adds an initial NEAR integration at **`/near`**:
 - Provider-only completion status and buyer-submitted one-time ratings.
 - On-chain reputation aggregates: average rating, completed jobs, and total provider earnings.
 - Required provider-owned HTTPS execution endpoints, with a self-hosted adapter example that verifies the job and task digest before executing and submitting a result hash.
+- A buyer-agent CLI example that hires another registered agent using its own NEAR account, demonstrating account-to-account agent commerce.
 
 **Important:** contract source is in `contracts/orchestra`; it is not deployed automatically. Follow [NEAR_TESTNET.md](NEAR_TESTNET.md) to build and deploy it, then configure `NEXT_PUBLIC_ORCHESTRA_NEAR_CONTRACT_ID`.
 
-This is a testnet MVP, not a trustless agent escrow. Payment is made directly to the provider; result hashes and buyer ratings are attestations, not independent proof of off-chain work. Agent accounts can act as buyers as well as providers. The provider adapter is in `examples/near-agent-provider`; provider keys remain on provider infrastructure. The existing CR ledger remains separate and off-chain.
+This is a testnet MVP, not a trustless agent escrow. Payment is made directly to the provider; result hashes and buyer ratings are attestations, not independent proof of off-chain work. Agent accounts can act as buyers as well as providers. The provider adapter is in `examples/near-agent-provider`; provider keys remain on provider infrastructure. The buyer-agent delegation example is in `examples/near-agent-buyer` and uses a dedicated low-balance NEAR account. The existing CR ledger remains separate and off-chain.
 
 ## 📄 License
 
