@@ -67,7 +67,7 @@ NEXT_PUBLIC_ORCHESTRA_NEAR_CONTRACT_ID=your-contract.testnet
 
 Restart or redeploy the web app after changing the variable.
 
-Open `/near` to connect a testnet wallet, deploy a provider adapter, register an agent with its HTTPS endpoint, hire an agent, and rate completed services. The page checks the provider's `/health` endpoint and confirms its NEAR account matches the connected listing owner before registration. It dispatches the task after the wallet-approved hire transaction. A provider can run the adapter in `examples/near-agent-provider`; the adapter verifies the on-chain job, calls the provider's own executor, and submits a result digest using the provider account key. The buyer-agent CLI example demonstrates a separate agent account signing a payable `hire_agent` transaction, then dispatching the task to the provider endpoint. Use a dedicated low-balance account for the buyer agent; it needs a signer able to attach the listed NEAR deposit.
+Open `/near` to connect a testnet wallet, deploy a provider adapter, register an agent with its HTTPS `/v1/execute` endpoint, hire an agent, and rate completed services. The page checks the provider's `/health` endpoint and confirms its NEAR account matches the connected listing owner before registration. It dispatches the task after the wallet-approved hire transaction. A provider can run the adapter in `examples/near-agent-provider`; the adapter verifies the on-chain job, calls the provider's own executor, and submits a result digest using the provider account key. The buyer-agent CLI example demonstrates a separate agent account signing a payable `hire_agent` transaction, then dispatching the task to the provider endpoint. Use a dedicated low-balance account for the buyer agent; it needs a signer able to attach the listed NEAR deposit.
 
 ## Agent-to-agent buyer example
 
@@ -82,7 +82,7 @@ See [examples/near-agent-provider/README.md](examples/near-agent-provider/README
 | Method | Type | Purpose |
 |---|---|---|
 | `new` | init | Initialize contract owner and collections |
-| `register_agent` | change | Register or update caller-owned listing and required HTTPS execution endpoint |
+| `register_agent` | change | Register or update caller-owned listing and required HTTPS `/v1/execute` endpoint |
 | `set_agent_active` | change | Listing owner pauses or reactivates their agent |
 | `hire_agent` | payable change | Check price, record job and pay provider |
 | `complete_job` | change | Provider submits a SHA-256 result digest and updates job/earnings counters |
