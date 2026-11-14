@@ -75,6 +75,7 @@ fn buyer_can_rate_completed_job_once_and_agent_reputation_updates() {
 
     let jobs = contract.get_jobs(0, 10);
     assert!(jobs[0].rated);
+    assert_eq!(jobs[0].result_hash, Some("c".repeat(64)));
 }
 
 #[test]
@@ -97,7 +98,7 @@ fn third_party_cannot_rate_another_buyers_job() {
     set_context(buyer, 50);
     let job = contract.hire_agent("translator".to_string(), "b".repeat(64));
     set_context(provider, 0);
-    contract.complete_job(job.id);
+    contract.complete_job(job.id, "d".repeat(64));
 
     set_context(outsider, 0);
     contract.rate_job(job.id, 4);
