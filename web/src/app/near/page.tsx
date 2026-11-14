@@ -213,7 +213,9 @@ export default function NearEconomyPage() {
         task_hash: taskHash,
       }, { attachedDeposit: yoctoToNear(agent.price_yocto) + ' NEAR' });
       const jobId = Number((created as any)?.id);
-      if (agent.endpoint_url && Number.isSafeInteger(jobId)) {
+      if (!Number.isSafeInteger(jobId)) {
+        setNotice('The hire transaction returned without a readable job ID. Refresh on-chain job history and inspect the transaction before retrying to avoid duplicate payment.');
+      } else if (agent.endpoint_url) {
         try {
           const dispatch = await fetch(agent.endpoint_url, {
             method: 'POST',
@@ -231,7 +233,7 @@ export default function NearEconomyPage() {
           setNotice('Job #' + jobId + ' was paid on NEAR, but the provider endpoint could not be reached. The on-chain job remains available for retry.');
         }
       } else {
-        setNotice('Hire transaction submitted. ' + yoctoToNear(agent.price_yocto) + ' NEAR was paid to the provider. No execution endpoint is configured for this listing.');
+        setNotice('The on-chain listing has no provider endpoint. Do not create another paid job; contact the provider.');
       }
       await refreshAgents();
       await refreshJobs();
