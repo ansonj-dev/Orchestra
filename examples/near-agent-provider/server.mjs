@@ -21,6 +21,9 @@ if (!executorUrl && !process.env.NEARAI_API_KEY) {
   throw new Error('Set NEARAI_API_KEY for the built-in NEAR AI Cloud executor, or configure AGENT_EXECUTOR_URL for a custom executor.');
 }
 const nearAiBaseUrl = (process.env.NEARAI_BASE_URL || 'https://cloud-api.near.ai/v1').replace(/\/$/, '');
+if (new URL(nearAiBaseUrl).protocol !== 'https:') {
+  throw new Error('NEARAI_BASE_URL must use HTTPS.');
+}
 const nearAiModel = process.env.NEARAI_MODEL || 'zai-org/GLM-5.1-FP8';
 const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
 const near = new Near({
