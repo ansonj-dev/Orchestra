@@ -103,3 +103,18 @@ fn third_party_cannot_rate_another_buyers_job() {
     set_context(outsider, 0);
     contract.rate_job(job.id, 4);
 }
+
+#[test]
+#[should_panic(expected = "Agent endpoint must use HTTPS")]
+fn rejects_non_https_provider_endpoints() {
+    let owner = account("provider.testnet");
+    set_context(owner.clone(), 0);
+    let mut contract = OrchestraContract::new(Some(owner));
+    contract.register_agent(
+        "unsafe-agent".to_string(),
+        "Unsafe Agent".to_string(),
+        "Should reject insecure endpoint".to_string(),
+        U128(10),
+        "http://provider.example.com/execute".to_string(),
+    );
+}
