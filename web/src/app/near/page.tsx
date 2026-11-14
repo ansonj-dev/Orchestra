@@ -2,6 +2,18 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
+type Job = {
+  id: number;
+  agent_id: string;
+  buyer: string;
+  provider: string;
+  task_hash: string;
+  price_yocto: string;
+  status: string;
+  created_at: number;
+  completed_at: number | null;
+};
+
 type Agent = {
   agent_id: string;
   owner: string;
@@ -43,6 +55,7 @@ export default function NearEconomyPage() {
   const [near, setNear] = useState<any>(null);
   const [accountId, setAccountId] = useState('');
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
@@ -51,6 +64,16 @@ export default function NearEconomyPage() {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('0.01');
   const [task, setTask] = useState('Run a sample research task and return a structured result.');
+
+  const refreshJobs = useCallback(async () => {
+    if (!near || !CONTRACT_ID) return;
+    try {
+      const rows = await near.view(CONTRACT_ID, 'get_jobs', { from_index: 0, limit: 50 });
+      setJobs(Array.isArray(rows) ? rows : []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not read on-chain job history.');
+    }
+  }, [near]);
 
   const refreshAgents = useCallback(async () => {
     if (!near || !CONTRACT_ID) return;
@@ -101,7 +124,7 @@ export default function NearEconomyPage() {
     };
   }, []);
 
-  useEffect(() => { refreshAgents(); }, [refreshAgents]);
+  useEffect(() => { refreshAgents(); refreshJobs(); }, [refreshAgents, refreshJobs]);
 
   const connect = async () => {
     setBusy(true);
@@ -140,6 +163,7 @@ export default function NearEconomyPage() {
       });
       setNotice('Agent registration transaction submitted to NEAR testnet.');
       await refreshAgents();
+      await refreshJobs();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Agent registration failed.');
     } finally {
@@ -161,8 +185,25 @@ export default function NearEconomyPage() {
       }, { attachedDeposit: yoctoToNear(agent.price_yocto) + ' NEAR' });
       setNotice('Hire transaction submitted. ' + yoctoToNear(agent.price_yocto) + ' NEAR is paid directly to the provider by the contract.');
       await refreshAgents();
+      await refreshJobs();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Hire transaction failed.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const completeJob = async (jobId: number) => {
+    if (!near || !CONTRACT_ID) return;
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      await near.call(CONTRACT_ID, 'complete_job', { job_id: jobId });
+      setNotice('Job completion transaction submitted to NEAR testnet.');
+      await refreshJobs();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not mark the job complete.');
     } finally {
       setBusy(false);
     }
@@ -251,6 +292,38 @@ export default function NearEconomyPage() {
               ))}
             </div>
           </div>
+        </section>
+
+        <section className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="font-mono text-xs text-violet-400">ON-CHAIN ACTIVITY</div>
+              <h2 className="mt-1 text-xl font-bold">Agent jobs</h2>
+              <p className="mt-1 text-sm text-slate-400">Public job receipts and provider-reported completion status.</p>
+            </div>
+            <button onClick={refreshJobs} disabled={!near || busy} className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 disabled:opacity-40">Refresh jobs</button>
+          </div>
+          {jobs.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-slate-700 p-5 text-sm text-slate-500">No jobs recorded by this contract yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {jobs.map(job => (
+                <article key={job.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/70 p-4">
+                  <div className="min-w-0">
+                    <div className="font-mono text-xs text-slate-500">JOB #{job.id} · {job.agent_id}</div>
+                    <div className="mt-1 text-sm text-slate-300">Buyer: {job.buyer} · Provider: {job.provider}</div>
+                    <div className="mt-1 break-all text-xs text-slate-500">Task digest: {job.task_hash}</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={job.status === 'COMPLETED' ? 'text-xs font-bold text-emerald-300' : 'text-xs font-bold text-amber-300'}>{job.status}</span>
+                    {accountId === job.provider && job.status === 'PAID' && (
+                      <button onClick={() => completeJob(job.id)} disabled={busy} className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-bold text-slate-950 disabled:opacity-40">Mark complete</button>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="rounded-2xl border border-slate-800 p-5 text-sm text-slate-400">
