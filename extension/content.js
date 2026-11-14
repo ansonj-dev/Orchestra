@@ -103,7 +103,7 @@
       });
 
       return {
-        success: true,
+        success: extracted.length > 0,
         sourceOrigin: window.location.origin,
         rowCount: extracted.length,
         data: extracted,
@@ -116,14 +116,18 @@
       const editor = document.querySelector('[contenteditable="true"], textarea, #document-canvas');
       if (editor && args.patchContent) {
         if (editor.isContentEditable) {
-          editor.innerHTML += `<div class="orchestra-injected-patch" style="border-left:3px solid #06b6d4;padding-left:8px;margin:8px 0;">${args.patchContent}</div>`;
+          const patch = document.createElement('div');
+          patch.className = 'orchestra-injected-patch';
+          patch.style.cssText = 'border-left:3px solid #06b6d4;padding-left:8px;margin:8px 0;';
+          patch.textContent = String(args.patchContent);
+          editor.appendChild(patch);
         } else {
           editor.value += "\n" + args.patchContent;
         }
         editor.dispatchEvent(new Event('input', { bubbles: true }));
       }
       return {
-        success: true,
+        success: !!editor && !!args.patchContent,
         patchedChars: (args.patchContent || "").length,
         targetEditorFound: !!editor
       };
@@ -138,63 +142,23 @@
     try {
       // Fetch available tools and user credits from local marketplace API or extension storage
       let tools = [];
-      let balance = 100.00;
+      let balance = null;
 
       try {
         const res = await fetch(`${MARKETPLACE_API_URL}/api/user-tools?hostname=${encodeURIComponent(window.location.hostname)}`);
         if (res.ok) {
           const json = await res.json();
           tools = json.tools || [];
-          balance = json.userCredits ?? 100.00;
+          balance = json.userCredits ?? null;
         }
       } catch (err) {
         console.log("[Orchestra.WebMCP] Local API fetch skipped, using default verified catalog.");
       }
 
-      // Default fallback tools if API is not yet loaded
-      if (tools.length === 0) {
-        tools = [
-          {
-            tool_name: "shopify_checkout_fast",
-            title: "Shopify Quick Checkout Agent",
-            description: "Automates multi-passenger cart compilation, shipping fields validation, and structured checkout processes safely via client DOM sessions.",
-            cost: 0.15,
-            input_schema: JSON.stringify({
-              type: "object",
-              properties: {
-                fullName: { type: "string", description: "Customer full name" },
-                email: { type: "string", description: "Email address for notifications" },
-                address: { type: "string", description: "Shipping street address" }
-              },
-              required: ["fullName", "email"]
-            })
-          },
-          {
-            tool_name: "extract_analytics_table",
-            title: "Vercel Analytics Deep-Miner",
-            description: "Connects securely with local dashboards to map real-time performance analytics tables into clean JSON matrices without backend API leak exposure.",
-            cost: 0.08,
-            input_schema: JSON.stringify({
-              type: "object",
-              properties: {
-                maxRows: { type: "number", description: "Maximum rows to extract" }
-              }
-            })
-          },
-          {
-            tool_name: "margin_context_editor",
-            title: "Margin Automated Document Editor",
-            description: "Injects structured markdown node capabilities directly into active text editor canvases, handling autonomous formatting and context patching.",
-            cost: 0.10,
-            input_schema: JSON.stringify({
-              type: "object",
-              properties: {
-                patchContent: { type: "string", description: "Markdown text patch to inject" }
-              },
-              required: ["patchContent"]
-            })
-          }
-        ];
+      // Fail closed: do not inject demo tools when the marketplace API is unavailable.
+      if (!Array.isArray(tools) || tools.length === 0) {
+        console.warn('[Orchestra.WebMCP] No rented tools returned by the marketplace. No tools were injected.');
+        return;
       }
 
       for (const tool of tools) {
@@ -234,16 +198,14 @@
               deductionRes = await res.json();
             } catch (billingErr) {
               console.error("[Orchestra Circuit Breaker] Billing error:", billingErr);
-              // If server is unavailable, check extension storage or simulate locally
-              if (window.__ORCHESTRA_WALLET_BALANCE__ !== undefined && window.__ORCHESTRA_WALLET_BALANCE__ <= 0) {
-                throw new Error("Orchestra Circuit Breaker Triggered: Wallet balance is 0.00 CR. Execution blocked.");
-              }
+              throw new Error(`Billing could not be verified. Execution blocked: ${billingErr.message || billingErr}`);
             }
 
             // 2. Session-Bound Execution
-            const executor = BUILTIN_TOOL_EXECUTORS[tool.tool_name] || (async (params) => {
-              return { success: true, message: `Generic execution of ${tool.tool_name} completed safely.`, params };
-            });
+            const executor = BUILTIN_TOOL_EXECUTORS[tool.tool_name];
+            if (!executor) {
+              throw new Error(`No browser executor is registered for '${tool.tool_name}'. Execution blocked.`);
+            }
 
             const result = await executor(args);
 
