@@ -113,6 +113,18 @@ export default function NearEconomyPage() {
           setNear(null);
           setNotice('Wallet disconnected.');
         });
+        // Restore an existing wallet session when the connector has one.
+        try {
+          const wallet = await instance.wallet();
+          const accounts = await wallet.getAccounts();
+          const restoredId = accounts?.[0]?.accountId || '';
+          if (active && restoredId) {
+            setAccountId(restoredId);
+            setNear(new Near({ network: 'testnet', wallet: fromHotConnect(instance) }));
+          }
+        } catch {
+          // No saved wallet session; the user can connect manually.
+        }
         if (active) setConnector(instance);
       } catch (e) {
         if (active) setError(e instanceof Error ? e.message : 'Could not initialize NEAR Connect.');
