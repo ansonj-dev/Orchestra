@@ -64,6 +64,12 @@ async function handleExecute(req, res) {
   if (origin && allowedOrigin !== '*' && origin !== allowedOrigin) {
     return send(res, 403, { success: false, error: 'Origin not allowed.' }, origin);
   }
+  if (!origin) {
+    const expectedToken = process.env.AGENT_DISPATCH_TOKEN;
+    if (!expectedToken || req.headers.authorization !== 'Bearer ' + expectedToken) {
+      return send(res, 401, { success: false, error: 'Server-to-server dispatch requires a valid bearer token.' }, origin);
+    }
+  }
 
   let input;
   try {
@@ -199,7 +205,7 @@ const server = createServer(async (req, res) => {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': allowedOrigin === '*' ? '*' : allowedOrigin,
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Max-Age': '600',
       'Vary': 'Origin',
     });
