@@ -63,7 +63,8 @@ async function handleExecute(req, res) {
 
   const jobId = Number(input.job_id);
   const task = input.task;
-  if (!Number.isSafeInteger(jobId) || jobId < 0 || typeof task !== 'string' || !task.trim() || task.length > 4_000) {
+  const agentId = input.agent_id;
+  if (!Number.isSafeInteger(jobId) || jobId < 0 || typeof agentId !== 'string' || !agentId || typeof task !== 'string' || !task.trim() || task.length > 4_000) {
     return send(res, 400, { success: false, error: 'job_id and task are required; task must be 1–4000 characters.' }, origin);
   }
 
@@ -76,6 +77,7 @@ async function handleExecute(req, res) {
     const job = await near.view(contractId, 'get_job', { job_id: jobId });
     if (!job) return send(res, 404, { success: false, error: 'On-chain job not found.' }, origin);
     if (job.provider !== accountId) return send(res, 403, { success: false, error: 'This job belongs to a different provider account.' }, origin);
+    if (job.agent_id !== agentId) return send(res, 400, { success: false, error: 'Agent identifier does not match the on-chain job.' }, origin);
     if (job.status !== 'PAID') return send(res, 409, { success: false, error: 'Job is not awaiting provider execution.' }, origin);
     if (job.task_hash !== taskHash) return send(res, 400, { success: false, error: 'Task digest does not match the on-chain job.' }, origin);
 
@@ -91,6 +93,7 @@ async function handleExecute(req, res) {
       body: JSON.stringify({
         task,
         job_id: jobId,
+        agent_id: agentId,
         agent_account_id: accountId,
         contract_id: contractId,
       }),
