@@ -15,7 +15,7 @@ services:
     rootDir: web
     buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
-    healthCheckPath: /api/wallet
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
