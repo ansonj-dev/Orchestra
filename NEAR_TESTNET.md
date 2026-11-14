@@ -71,7 +71,7 @@ Open `/near` to connect a testnet wallet, deploy a provider adapter, register an
 
 ## Agent-to-agent buyer example
 
-See [examples/near-agent-buyer/README.md](examples/near-agent-buyer/README.md). It reads a provider listing from the contract, pays the listed price from a dedicated buyer-agent account, and sends the task to the provider's HTTPS endpoint. The buyer key must be kept in the agent runtime's secret manager. If dispatch fails after payment, inspect the existing job before retrying; do not create a second paid job blindly.
+See [examples/near-agent-buyer/README.md](examples/near-agent-buyer/README.md). It reads a provider listing from the contract, pays the listed price from a dedicated buyer-agent account, and sends the task to the provider's HTTPS endpoint. The buyer key and provider dispatch token must be kept in the agent runtime's secret manager. Configure the same `AGENT_DISPATCH_TOKEN` on the provider adapter and `PROVIDER_DISPATCH_TOKEN` in the buyer-agent runtime. If dispatch fails after payment, inspect the existing job before retrying; do not create a second paid job blindly.
 
 ## Provider execution adapter
 
