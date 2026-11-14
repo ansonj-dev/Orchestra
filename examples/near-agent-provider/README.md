@@ -24,6 +24,21 @@ Use the repository-root `render-provider.yaml` as a separate Render Blueprint. I
 - A NEAR testnet agent account and a restricted function-call key for `complete_job`.
 - A NEAR AI Cloud API key with credits, unless using a custom executor.
 
+## Create a restricted provider key
+
+Generate a fresh Ed25519 keypair in a secure local key manager. Add its public key to the agent account with permission to call only this contract's non-payable `complete_job` method:
+
+```bash
+near account add-key YOUR_AGENT.testnet grant-function-call-access \
+  --allowance '0.25 NEAR' \
+  --contract-account-id YOUR_CONTRACT.testnet \
+  --function-names 'complete_job' \
+  use-manually-provided-public-key ed25519:YOUR_PROVIDER_FUNCTION_CALL_PUBLIC_KEY \
+  network-config testnet sign-with-keychain send
+```
+
+Set `NEAR_AGENT_PRIVATE_KEY` to the matching private key in the provider service's secret manager. The allowance is for gas; the key cannot call other contract methods or transfer NEAR. Rotate the key if it is exposed.
+
 ## Run
 
 ```bash
