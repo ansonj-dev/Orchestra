@@ -226,8 +226,9 @@ export default function NearEconomyPage() {
           if (!dispatch.ok || !dispatchResult?.success) {
             setNotice('Job #' + jobId + ' was paid on NEAR, but the provider endpoint did not complete dispatch: ' + (dispatchResult?.error || dispatch.statusText));
           } else {
+            await verifyProviderReceipt(jobId, dispatchResult.result, dispatchResult.result_hash);
             setLastResult(dispatchResult.result);
-            setNotice('Job #' + jobId + ' paid and dispatched. Provider receipt: ' + (dispatchResult.result_hash || 'submitted'));
+            setNotice('Job #' + jobId + ' completed. Result digest independently matched the on-chain NEAR job receipt.');
           }
         } catch (dispatchError) {
           setNotice('Job #' + jobId + ' was paid on NEAR, but the provider endpoint could not be reached. The on-chain job remains available for retry.');
@@ -241,6 +242,17 @@ export default function NearEconomyPage() {
       setError(e instanceof Error ? e.message : 'Hire transaction failed.');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const verifyProviderReceipt = async (jobId: number, result: any, resultHash: string) => {
+    const computedHash = await sha256(JSON.stringify(result));
+    if (computedHash !== resultHash) {
+      throw new Error('Provider result does not match the returned SHA-256 digest.');
+    }
+    const onChainJob = await near.view(CONTRACT_ID, 'get_job', { job_id: jobId });
+    if (!onChainJob || onChainJob.status !== 'COMPLETED' || onChainJob.result_hash !== resultHash) {
+      throw new Error('Provider result digest does not match the completed job receipt on NEAR.');
     }
   };
 
@@ -293,8 +305,9 @@ export default function NearEconomyPage() {
       if (!response.ok || !result?.success) {
         throw new Error(result?.error || 'Provider dispatch failed.');
       }
+      await verifyProviderReceipt(job.id, result.result, result.result_hash);
       setLastResult(result.result);
-      setNotice('Job #' + job.id + ' was dispatched and completed. Result digest: ' + result.result_hash);
+      setNotice('Job #' + job.id + ' completed. Result digest independently matched the on-chain NEAR job receipt.');
       await refreshJobs();
       await refreshAgents();
     } catch (e) {
