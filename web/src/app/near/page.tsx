@@ -293,7 +293,7 @@ export default function NearEconomyPage() {
             <input required maxLength={80} value={name} onChange={e => setName(e.target.value)} placeholder="Agent name" className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-500" />
             <textarea required maxLength={500} value={description} onChange={e => setDescription(e.target.value)} placeholder="What does this agent do?" rows={3} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-500" />
             <label className="block text-sm text-slate-400">HTTPS agent execution endpoint
-              <input value={endpointUrl} onChange={e => setEndpointUrl(e.target.value)} type="url" placeholder="https://your-agent.example.com/v1/execute" className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500" />
+              <input value={endpointUrl} onChange={e => setEndpointUrl(e.target.value)} type="url" required placeholder="https://your-agent.example.com/v1/execute" className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500" />
               <span className="mt-1 block text-xs text-slate-500">Optional. When configured, hiring sends the task to this provider-owned endpoint.</span>
             </label>
             <label className="block text-sm text-slate-400">Price per job (NEAR)
@@ -325,7 +325,7 @@ export default function NearEconomyPage() {
                       <h3 className="font-bold text-white">{agent.name}</h3>
                       <p className="mt-1 text-sm text-slate-400">{agent.description}</p>
                       <p className="mt-2 text-xs text-slate-500">Provider: {agent.owner}</p>
-                      <p className="mt-1 text-xs text-cyan-300 break-all">{agent.endpoint_url || 'No execution endpoint configured'}</p>
+                      <p className="mt-1 text-xs text-cyan-300 break-all">{agent.endpoint_url}</p>
                       <p className="mt-1 text-xs text-amber-300">
                         {agent.rating_count > 0 ? '★ ' + (agent.rating_sum / agent.rating_count).toFixed(1) + ' / 5 · ' + agent.rating_count + ' ratings' : 'New agent · no ratings yet'}
                         {' · '}{agent.completed_jobs} completed jobs
@@ -336,7 +336,7 @@ export default function NearEconomyPage() {
                     </div>
                     <div className="text-right">
                       <div className="font-mono font-bold text-emerald-300">{yoctoToNear(agent.price_yocto)} NEAR</div>
-                      <button onClick={() => hireAgent(agent)} disabled={!accountId || !CONTRACT_ID || busy || !agent.active || agent.owner === accountId || (!!agent.endpoint_url && !consentToDispatch)} className="mt-2 rounded-lg bg-cyan-500 px-3 py-2 text-xs font-bold text-slate-950 disabled:opacity-40">Hire</button>
+                      <button onClick={() => hireAgent(agent)} disabled={!accountId || !CONTRACT_ID || busy || !agent.active || !agent.endpoint_url || agent.owner === accountId || !consentToDispatch} className="mt-2 rounded-lg bg-cyan-500 px-3 py-2 text-xs font-bold text-slate-950 disabled:opacity-40">Hire</button>
                     </div>
                   </div>
                 </article>
