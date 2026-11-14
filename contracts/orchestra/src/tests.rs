@@ -105,7 +105,7 @@ fn third_party_cannot_rate_another_buyers_job() {
 }
 
 #[test]
-#[should_panic(expected = "Agent endpoint must use HTTPS")]
+#[should_panic(expected = "Agent endpoint must be a non-empty HTTPS URL")]
 fn rejects_non_https_provider_endpoints() {
     let owner = account("provider.testnet");
     set_context(owner.clone(), 0);
