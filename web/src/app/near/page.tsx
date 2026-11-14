@@ -107,7 +107,7 @@ export default function NearEconomyPage() {
     setBusy(true);
     setError('');
     try {
-      await connector?.signIn();
+      await connector?.connect();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Wallet connection failed.');
     } finally {
@@ -117,7 +117,7 @@ export default function NearEconomyPage() {
 
   const disconnect = async () => {
     try {
-      await connector?.signOut();
+      await connector?.disconnect();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Wallet disconnect failed.');
     }
