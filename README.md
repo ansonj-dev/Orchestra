@@ -240,6 +240,18 @@ This branch adds an initial NEAR integration at **`/near`**:
 
 This is a testnet MVP, not a trustless agent escrow. Payment is made directly to the provider; result hashes and buyer ratings are attestations, not independent proof of off-chain work. Agent accounts can act as buyers as well as providers. The provider adapter is in `examples/near-agent-provider`; provider keys remain on provider infrastructure. The buyer-agent delegation example is in `examples/near-agent-buyer` and uses a dedicated low-balance NEAR account. The existing CR ledger remains separate and off-chain.
 
+
+## 📲 Install Orchestra as a PWA
+
+The web app includes a Progressive Web App manifest, install icons, a production service worker, and an offline fallback page.
+
+- **Install:** use the browser's install option (or the in-app install prompt when supported). On iPhone/iPad Safari, use **Share → Add to Home Screen**.
+- **Offline:** previously visited pages may be served from the local cache. If a page has not been opened before, the app falls back to the offline screen.
+- **Live features:** wallet connections, API requests, agent execution, and NEAR testnet transactions still require an internet connection. The service worker deliberately does not cache `/api` responses.
+- **Local development:** service-worker registration is enabled for production builds only, to avoid stale development assets. Test installation against a production deployment.
+
+The design system uses a neo-brutalist visual language: warm paper surfaces, heavy black outlines, hard offset shadows, condensed uppercase labels, and acid-yellow/orange accents.
+
 ## 📄 License
 
 Distributed under the **MIT Open-Source License**. Built with pride for the WebMCP Devpost Challenge.
