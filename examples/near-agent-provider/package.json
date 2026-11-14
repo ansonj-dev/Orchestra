@@ -1,0 +1,11 @@
+{
+  "name": "orchestra-near-agent-provider",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "near-kit": "^0.20.2"
+  }
+}
