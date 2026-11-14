@@ -1,7 +1,7 @@
 # Orchestra 🎻
 
 > [!WARNING]
-> **NEAR hackathon upgrade branch — work in progress.** This branch contains safety fixes and is not yet a production-ready agent economy or NEAR integration.
+> **NEAR hackathon upgrade branch — work in progress.** This branch contains safety fixes and an initial NEAR testnet agent-economy integration. It is not production-ready.
 >
 > - Production billing, wallet mutations, and marketplace mutations are deliberately disabled until authenticated per-user sessions are implemented.
 > - Tool integrity checks fail closed unless trusted SHA-256 fingerprints are configured with `ORCHESTRA_CERTIFIED_TOOL_HASHES`.
