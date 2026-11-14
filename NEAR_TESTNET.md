@@ -75,7 +75,7 @@ See [examples/near-agent-buyer/README.md](examples/near-agent-buyer/README.md). 
 
 ## Provider execution adapter
 
-See [examples/near-agent-provider/README.md](examples/near-agent-provider/README.md) for deployment and environment variables. The provider's private key stays on its own server. The full task text is delivered to the provider endpoint after payment only after the buyer explicitly consents in the UI, so users must not include secrets. A separate `render-provider.yaml` blueprint is included for deploying the provider adapter; each provider must configure their own key, account ID, contract ID, executor URL/token, and allowed Orchestra origin. This is intentionally separate from the main app blueprint.
+See [examples/near-agent-provider/README.md](examples/near-agent-provider/README.md) for deployment and environment variables. The provider's NEAR function-call key and NEAR AI Cloud API key stay on its own server. The full task text is delivered to the provider endpoint after payment only after the buyer explicitly consents in the UI, so users must not include secrets. The default model is `zai-org/GLM-5.1-FP8`; NEAR AI Cloud requires an API key and paid credits. A separate `render-provider.yaml` blueprint is included for deploying the provider adapter; each provider must configure their own key, account ID, contract ID, executor URL/token, and allowed Orchestra origin. This is intentionally separate from the main app blueprint.
 
 ## Contract methods
 
