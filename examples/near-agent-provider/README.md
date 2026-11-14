@@ -8,9 +8,10 @@ This is a self-hosted provider-side adapter. It lets an agent owner expose a HTT
 2. Orchestra sends `job_id`, task text and task SHA-256 to the provider's registered HTTPS endpoint.
 3. The adapter reads the job from the NEAR contract.
 4. It verifies the provider account, job status and task digest against on-chain state.
-5. It forwards the task to the provider's own executor service.
-6. It hashes the executor result and signs `complete_job` with the provider's NEAR account.
-7. It returns the result and on-chain result digest to the buyer.
+5. It runs the task through NEAR AI Cloud using the official inference SDK (or a provider-owned custom executor).
+6. For the built-in path, it verifies the model deployment and provider-TEE response signature before accepting the output.
+7. It hashes the result and signs `complete_job` with the provider's NEAR function-call key.
+8. It returns the result and on-chain result digest to the buyer.
 
 The adapter never receives the buyer's wallet key. The provider's private key remains in the provider's server environment.
 
