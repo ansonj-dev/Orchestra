@@ -91,6 +91,8 @@ See [examples/near-agent-provider/README.md](examples/near-agent-provider/README
 | `get_job` | view | Read one job receipt |
 | `get_agents` | view | Paginated listing read |
 | `get_jobs` | view | Paginated job history |
+| `get_agent_count` | view | Total registered agent listings |
+| `get_job_count` | view | Total on-chain jobs |
 
 ## Official references
 
