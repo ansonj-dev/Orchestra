@@ -1,99 +1,80 @@
-// GET & POST /api/mcp - Model Context Protocol Server Endpoint
-// Connects Cursor, Claude Code, and ChatGPT Desktop to Orchestra's WebMCP Tools
+// Remote MCP endpoint.
+// Browser-local WebMCP tools require the user's active tab and cannot be executed
+// by this server route. Never debit credits or report success for work not performed.
 
 import { NextResponse } from 'next/server';
 import { OrchestraLedger } from '@/lib/ledger';
 
-export async function GET() {
-  // Returns MCP Tool Manifest for discovery
-  const tools = OrchestraLedger.getRentedTools();
-  
-  const mcpTools = tools.map(t => ({
-    name: t.tool_name,
-    description: `[Orchestra WebMCP | Cost: ${t.cost} CR] ${t.description}`,
-    inputSchema: t.input_schema
-  }));
+const SERVER_INFO = { name: 'orchestra-webmcp-hub', version: '1.1.0' };
+const PROTOCOL_VERSION = '2024-11-05';
 
+function listTools() {
+  return OrchestraLedger.getRentedTools().map((tool) => ({
+    name: tool.tool_name,
+    description: `[Orchestra WebMCP | Cost: ${tool.cost} CR] ${tool.description}`,
+    inputSchema: tool.input_schema
+  }));
+}
+
+export async function GET() {
   return NextResponse.json({
-    jsonrpc: "2.0",
-    protocolVersion: "2024-11-05",
-    serverInfo: {
-      name: "orchestra-webmcp-hub",
-      version: "1.0.0"
-    },
-    tools: mcpTools
+    protocolVersion: PROTOCOL_VERSION,
+    serverInfo: SERVER_INFO,
+    tools: listTools(),
+    executionMode: 'browser-local',
+    note: 'Remote execution is disabled. Invoke tools from the Orchestra browser runtime.'
   });
 }
 
 export async function POST(request: Request) {
+  let body: any;
   try {
-    const body = await request.json();
-    const { method, params, id } = body;
-
-    // 1. Tool Discovery Request
-    if (method === "tools/list") {
-      const tools = OrchestraLedger.getRentedTools();
-      return NextResponse.json({
-        jsonrpc: "2.0",
-        id,
-        result: {
-          tools: tools.map(t => ({
-            name: t.tool_name,
-            description: `[Orchestra WebMCP | Cost: ${t.cost} CR | Reliability: ${t.reliability_score}%] ${t.description}`,
-            inputSchema: t.input_schema
-          }))
-        }
-      });
-    }
-
-    // 2. Tool Execution Request (Call from Cursor or Claude Code)
-    if (method === "tools/call") {
-      const { name, arguments: toolArgs } = params;
-      
-      const deduction = OrchestraLedger.deductCredits({
-        toolName: name,
-        caller: 'cursor',
-        metadata: { clientMcpArgs: toolArgs }
-      });
-
-      if (!deduction.success) {
-        return NextResponse.json({
-          jsonrpc: "2.0",
-          id,
-          error: {
-            code: -32000,
-            message: deduction.error || "Circuit Breaker: Insufficient credits or cap reached."
-          }
-        });
-      }
-
-      // Format MCP Result
-      const resultText = `[Orchestra WebMCP Invoked: ${name}]\nStatus: Executed in browser context.\nCredits Deducted: ${deduction.deducted} CR\nRemaining Balance: ${deduction.remainingBalance.toFixed(2)} CR\nParameters: ${JSON.stringify(toolArgs, null, 2)}`;
-
-      return NextResponse.json({
-        jsonrpc: "2.0",
-        id,
-        result: {
-          content: [
-            {
-              type: "text",
-              text: resultText
-            }
-          ],
-          isError: false
-        }
-      });
-    }
-
+    body = await request.json();
+  } catch {
     return NextResponse.json({
-      jsonrpc: "2.0",
+      jsonrpc: '2.0',
+      id: null,
+      error: { code: -32700, message: 'Parse error: request body must be valid JSON.' }
+    }, { status: 400 });
+  }
+
+  const { method, params, id } = body ?? {};
+
+  if (body?.jsonrpc !== '2.0' || typeof method !== 'string') {
+    return NextResponse.json({
+      jsonrpc: '2.0',
+      id: id ?? null,
+      error: { code: -32600, message: 'Invalid JSON-RPC request.' }
+    }, { status: 400 });
+  }
+
+  if (method === 'tools/list') {
+    return NextResponse.json({
+      jsonrpc: '2.0',
       id,
-      error: { code: -32601, message: "Method not found" }
-    });
-  } catch (err: any) {
-    return NextResponse.json({
-      jsonrpc: "2.0",
-      error: { code: -32603, message: err.message || "Internal error" }
+      result: { tools: listTools() }
     });
   }
+
+  if (method === 'tools/call') {
+    const name = params?.name;
+    const available = listTools().some((tool) => tool.name === name);
+
+    return NextResponse.json({
+      jsonrpc: '2.0',
+      id,
+      error: {
+        code: -32002,
+        message: available
+          ? 'This tool executes only in the user\'s active browser tab. Remote server execution is disabled; no credits were charged.'
+          : `Unknown or unrented tool: ${String(name ?? '(missing name)')}.`
+      }
+    });
+  }
+
+  return NextResponse.json({
+    jsonrpc: '2.0',
+    id,
+    error: { code: -32601, message: 'Method not found.' }
+  });
 }
