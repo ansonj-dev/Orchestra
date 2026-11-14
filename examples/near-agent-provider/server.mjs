@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import { createHash } from 'node:crypto';
 import { Near } from 'near-kit';
+import { InferenceClient } from '@nearai/inference-sdk/node';
 
 const required = [
   'NEAR_AGENT_PRIVATE_KEY',
@@ -24,12 +25,17 @@ const nearAiBaseUrl = (process.env.NEARAI_BASE_URL || 'https://cloud-api.near.ai
 if (new URL(nearAiBaseUrl).protocol !== 'https:') {
   throw new Error('NEARAI_BASE_URL must use HTTPS.');
 }
-const nearAiModel = process.env.NEARAI_MODEL || 'zai-org/GLM-5.1-FP8';
+const nearAiModel = process.env.NEARAI_MODEL || 'z-ai/glm-5.3-flash';
 const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
 const near = new Near({
   network: 'testnet',
   privateKey: process.env.NEAR_AGENT_PRIVATE_KEY,
   defaultSignerId: accountId,
+});
+const inference = executorUrl ? null : new InferenceClient({
+  apiKey: process.env.NEARAI_API_KEY,
+  baseUrl: nearAiBaseUrl + '/',
+  e2ee: true,
 });
 
 const sha256 = (value) => createHash('sha256').update(value, 'utf8').digest('hex');
@@ -94,78 +100,77 @@ async function handleExecute(req, res) {
     }
     activeJobs.add(jobId);
     try {
-      // Prefer a provider-owned executor when configured; otherwise use NEAR AI Cloud directly.
-      const upstream = executorUrl
-        ? await fetch(executorUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(process.env.AGENT_EXECUTOR_TOKEN
-                ? { Authorization: 'Bearer ' + process.env.AGENT_EXECUTOR_TOKEN }
-                : {}),
-            },
-            body: JSON.stringify({
-              task,
-              job_id: jobId,
-              agent_id: agentId,
-              agent_account_id: accountId,
-              contract_id: contractId,
-            }),
-            signal: AbortSignal.timeout(45_000),
-          })
-        : await fetch(nearAiBaseUrl + '/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: 'Bearer ' + process.env.NEARAI_API_KEY,
-            },
-            body: JSON.stringify({
-              model: nearAiModel,
-              temperature: 0.2,
-              max_tokens: 1600,
-              messages: [
-                {
-                  role: 'system',
-                  content: 'You are an autonomous specialist agent hired through Orchestra. Complete the buyer task accurately. Be explicit about uncertainty. Do not claim to have performed external actions unless you actually did them. Return a useful, structured answer.',
-                },
-                {
-                  role: 'user',
-                  content: task,
-                },
-              ],
-            }),
-            signal: AbortSignal.timeout(45_000),
-          });
-
-      const upstreamText = await upstream.text();
-      if (Buffer.byteLength(upstreamText, 'utf8') > 100_000) {
-        return send(res, 502, { success: false, error: 'Agent executor response exceeded 100 KB.' }, origin);
-      }
-      if (!upstream.ok) {
-      console.error('[Orchestra Agent] Executor returned HTTP', upstream.status, 'for job', jobId);
-      return send(res, 502, { success: false, error: 'Agent executor failed with HTTP ' + upstream.status + '.' }, origin);
-    }
-
       let result;
-      try {
-        const payload = JSON.parse(upstreamText);
-        if (executorUrl) {
-          result = payload;
-        } else {
-          const output = payload?.choices?.[0]?.message?.content;
-          if (typeof output !== 'string' || !output.trim()) {
-            throw new Error('NEAR AI Cloud returned no assistant content.');
-          }
-          result = {
-            provider: 'NEAR AI Cloud',
-            model: payload.model || nearAiModel,
-            output,
-            usage: payload.usage || null,
-          };
+      if (executorUrl) {
+        // Custom provider-owned executor; its credentials stay on the provider's server.
+        const upstream = await fetch(executorUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(process.env.AGENT_EXECUTOR_TOKEN
+              ? { Authorization: 'Bearer ' + process.env.AGENT_EXECUTOR_TOKEN }
+              : {}),
+          },
+          body: JSON.stringify({
+            task,
+            job_id: jobId,
+            agent_id: agentId,
+            agent_account_id: accountId,
+            contract_id: contractId,
+          }),
+          signal: AbortSignal.timeout(45_000),
+        });
+        const upstreamText = await upstream.text();
+        if (Buffer.byteLength(upstreamText, 'utf8') > 100_000) {
+          return send(res, 502, { success: false, error: 'Agent executor response exceeded 100 KB.' }, origin);
         }
-      } catch (error) {
-        if (!executorUrl) throw error;
-        result = { output: upstreamText };
+        if (!upstream.ok) {
+          console.error('[Orchestra Agent] Custom executor returned HTTP', upstream.status, 'for job', jobId);
+          return send(res, 502, { success: false, error: 'Agent executor failed with HTTP ' + upstream.status + '.' }, origin);
+        }
+        try {
+          result = JSON.parse(upstreamText);
+        } catch {
+          result = { output: upstreamText };
+        }
+      } else {
+        // The official SDK verifies Gateway/model evidence before inference,
+        // encrypts supported Chat fields to the attested model, and verifies
+        // the response signature before this result is accepted.
+        const completion = await inference.chat.completions.create({
+          model: nearAiModel,
+          temperature: 0.2,
+          max_tokens: 1600,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an autonomous specialist agent hired through Orchestra. Complete the buyer task accurately. Be explicit about uncertainty. Do not claim to have performed external actions unless you actually did them. Return a useful, structured answer.',
+            },
+            {
+              role: 'user',
+              content: task,
+            },
+          ],
+        });
+        const verification = await inference.verifyResponse(completion.id);
+        if (verification.signatureKind !== 'provider_tee') {
+          throw new Error('NEAR AI response did not carry a verified provider TEE signature.');
+        }
+        const output = completion.choices?.[0]?.message?.content;
+        if (typeof output !== 'string' || !output.trim()) {
+          throw new Error('NEAR AI Cloud returned no assistant content.');
+        }
+        result = {
+          provider: 'NEAR AI Cloud',
+          model: completion.model || nearAiModel,
+          output,
+          usage: completion.usage || null,
+          verification: {
+            signature_kind: verification.signatureKind,
+            verified: true,
+            e2ee: true,
+          },
+        };
       }
       const resultHash = sha256(JSON.stringify(result));
 
