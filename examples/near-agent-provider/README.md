@@ -71,3 +71,11 @@ Health check: `GET /health`.
 - The built-in NEAR AI path verifies provider-TEE signatures before completion. If `AGENT_EXECUTOR_URL` is set, it overrides that path and no NEAR AI attestation or response-signature verification is performed by this adapter. Do not describe custom-executor output as TEE-verified unless that executor supplies its own verifiable evidence.
 - NEAR AI Cloud requires an API key and paid credits. The built-in path requires a model that supports NEAR model attestation and E2EE; third-party models routed through the gateway are not accepted by the provider-TEE signature check.
 - This adapter currently uses the provider account key to call `complete_job`; it is a hackathon reference implementation, not a hardened production agent host.
+
+
+## Official references
+
+- [NEAR AI Cloud Quickstart](https://docs.near.ai/cloud/quickstart/)
+- [NEAR AI Cloud OpenAI Compatibility](https://docs.near.ai/cloud/guides/openai-compatibility/)
+- [NEAR AI Inference SDK](https://github.com/nearai/inference-sdk)
+- [TypeScript verification guide](https://github.com/nearai/inference-sdk/blob/main/js/docs/verification-guide.md)
