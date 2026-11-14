@@ -189,9 +189,10 @@ export async function executeDomAction(toolName: string, parameters: any = {}): 
 
       return {
         action: 'shopify_checkout_fast',
-        status: 'SUCCESS_DOM_UPDATE',
+        success: fieldsUpdated.length > 0,
+        status: fieldsUpdated.length > 0 ? 'SUCCESS_DOM_UPDATE' : 'NO_MATCHING_FIELDS',
         fieldsUpdated,
-        customerName: parameters.fullName || 'Marcus Vance',
+        customerName: parameters.fullName || undefined,
         deliveryOrigin: window.location.origin,
         message: `Fast checkout DOM fields autofilled successfully (${fieldsUpdated.length} fields modified).`
       };
@@ -211,11 +212,9 @@ export async function executeDomAction(toolName: string, parameters: any = {}): 
         action: 'extract_analytics_table',
         status: 'SUCCESS_EXTRACTED',
         rowCount: extracted.length,
-        extractedData: extracted.length > 0 ? extracted : [
-          { service: 'auth-gateway', endpoint: '/v2/oauth/token', p99: '42ms', status: 'HEALTHY' },
-          { service: 'billing-rpc', endpoint: '/rpc/execute_micro_billing', p99: '18ms', status: 'HEALTHY' },
-          { service: 'model-context-tunnel', endpoint: '/api/mcp', p99: '31ms', status: 'HEALTHY' }
-        ],
+        extractedData: extracted,
+        success: extracted.length > 0,
+        message: extracted.length > 0 ? 'Rows extracted from the active page.' : 'No analytics rows were found in the active page.',
         timestamp: new Date().toISOString()
       };
     }
@@ -230,7 +229,11 @@ export async function executeDomAction(toolName: string, parameters: any = {}): 
           editor.dispatchEvent(new Event('input', { bubbles: true }));
           patched = true;
         } else if (editor.isContentEditable) {
-          editor.innerHTML += `<div class="orchestra-patch" style="border-left:3px solid #06b6d4;padding-left:8px;margin:8px 0;">${parameters.patchContent}</div>`;
+          const patch = document.createElement('div');
+          patch.className = 'orchestra-patch';
+          patch.style.cssText = 'border-left:3px solid #06b6d4;padding-left:8px;margin:8px 0;';
+          patch.textContent = String(parameters.patchContent);
+          editor.appendChild(patch);
           editor.dispatchEvent(new Event('input', { bubbles: true }));
           patched = true;
         }
@@ -238,18 +241,20 @@ export async function executeDomAction(toolName: string, parameters: any = {}): 
 
       return {
         action: 'margin_context_editor',
-        status: 'SUCCESS_PATCHED',
+        success: patched,
+        status: patched ? 'SUCCESS_PATCHED' : 'NO_EDITABLE_TARGET',
         targetEditorFound: !!editor,
         patchedChars: (parameters.patchContent || '').length,
-        message: patched ? 'Document canvas successfully patched.' : 'No canvas detected, buffer updated in memory.'
+        message: patched ? 'Document canvas successfully patched.' : 'No editable target was found; no changes were made.'
       };
     }
 
     default: {
       return {
+        success: false,
         action: toolName,
-        status: 'SUCCESS_GENERIC_EXECUTION',
-        parameters,
+        status: 'UNSUPPORTED_TOOL',
+        error: `No browser executor is registered for '${toolName}'.`,
         timestamp: new Date().toISOString()
       };
     }
@@ -529,7 +534,7 @@ export async function initializeOrchestraWebMCP(): Promise<WebMCPStatusInfo> {
         }
 
         return {
-          success: true,
+          success: domResult?.success !== false,
           toolName: input.toolName,
           creditsDeducted: deductData.deducted,
           remainingBalance: deductData.remainingBalance,
@@ -561,9 +566,9 @@ export async function initializeOrchestraWebMCP(): Promise<WebMCPStatusInfo> {
         const data = await res.json();
         return {
           success: true,
-          balance: data.balance ?? 100.0,
-          activeToolsCount: data.activeToolsCount ?? 3,
-          isCircuitBreakerActive: data.isCircuitBreakerActive ?? true,
+          balance: data.balance,
+          activeToolsCount: data.activeToolsCount,
+          isCircuitBreakerActive: data.isCircuitBreakerActive,
           recentTransactions: (data.transactions || []).slice(0, 5)
         };
       } catch (err: any) {
