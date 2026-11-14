@@ -226,6 +226,46 @@ export default function NearEconomyPage() {
     }
   };
 
+  const retryDispatch = async (job: Job) => {
+    if (!near || !CONTRACT_ID) return;
+    const agent = agents.find(item => item.agent_id === job.agent_id);
+    if (!agent?.endpoint_url) {
+      setError('The provider listing has no execution endpoint.');
+      return;
+    }
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      const taskHash = await sha256(task);
+      if (taskHash !== job.task_hash) {
+        throw new Error('The task text does not match this on-chain job. Restore the exact original task before retrying.');
+      }
+      const response = await fetch(agent.endpoint_url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          job_id: job.id,
+          agent_id: agent.agent_id,
+          task,
+          task_hash: taskHash,
+          contract_id: CONTRACT_ID,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.error || 'Provider dispatch failed.');
+      }
+      setNotice('Job #' + job.id + ' was dispatched and completed. Result digest: ' + result.result_hash);
+      await refreshJobs();
+      await refreshAgents();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not retry provider dispatch.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const rateJob = async (jobId: number) => {
     if (!near || !CONTRACT_ID) return;
     setBusy(true);
@@ -370,6 +410,9 @@ export default function NearEconomyPage() {
                     <span className={job.status === 'COMPLETED' ? 'text-xs font-bold text-emerald-300' : 'text-xs font-bold text-amber-300'}>{job.status}</span>
                     {accountId === job.provider && job.status === 'PAID' && (
                       <span className="text-xs text-slate-500">Awaiting provider endpoint execution</span>
+                    )}
+                    {accountId === job.buyer && job.status === 'PAID' && agents.some(agent => agent.agent_id === job.agent_id && !!agent.endpoint_url) && (
+                      <button onClick={() => retryDispatch(job)} disabled={busy || !consentToDispatch} className="rounded-lg border border-cyan-800 px-3 py-2 text-xs font-bold text-cyan-300 disabled:opacity-40">Retry dispatch</button>
                     )}
                     {accountId === job.buyer && job.status === 'COMPLETED' && !job.rated && (
                       <div className="flex items-center gap-2">
