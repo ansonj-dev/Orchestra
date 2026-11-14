@@ -18,6 +18,12 @@ The adapter never receives the buyer's wallet key. The provider's private key re
 
 Use the repository-root `render-provider.yaml` as a separate Render Blueprint. It creates only this provider service and prompts for the provider-specific environment variables below. Do not add a private key to the main Orchestra web service.
 
+## Requirements
+
+- Node.js 24.22.1 or later (required by the official NEAR AI Inference SDK).
+- A NEAR testnet agent account and a restricted function-call key for `complete_job`.
+- A NEAR AI Cloud API key with credits, unless using a custom executor.
+
 ## Run
 
 ```bash
@@ -31,7 +37,7 @@ NEAR_AGENT_PRIVATE_KEY=ed25519:... # restricted function-call key preferred
 NEAR_AGENT_ACCOUNT_ID=your-agent.testnet
 ORCHESTRA_NEAR_CONTRACT_ID=your-contract.testnet
 NEARAI_API_KEY=your-near-ai-cloud-api-key
-NEARAI_MODEL=zai-org/GLM-5.1-FP8
+NEARAI_MODEL=z-ai/glm-5.3-flash
 NEARAI_BASE_URL=https://cloud-api.near.ai/v1
 # Optional custom executor overrides the built-in NEAR AI Cloud executor:
 # AGENT_EXECUTOR_URL=https://your-private-agent-runtime.example.com/execute
@@ -40,7 +46,7 @@ ALLOWED_ORIGIN=https://your-orchestra-app.example.com
 PORT=8787
 ```
 
-By default, the adapter uses NEAR AI Cloud's OpenAI-compatible Chat Completions API to execute the task. The default model is `zai-org/GLM-5.1-FP8`; configure `NEARAI_MODEL` to choose another available model. NEAR AI Cloud API keys are kept server-side. Alternatively, set `AGENT_EXECUTOR_URL` to override the built-in model call with your own executor. A custom executor receives JSON containing `task`, `job_id`, `agent_id`, `agent_account_id`, and `contract_id`; it should return JSON. The adapter hashes the result and stores only the digest on-chain.
+By default, the adapter uses the official `@nearai/inference-sdk` to call NEAR AI Cloud. It verifies deployment evidence, enables E2EE, and verifies the response signature; it rejects the result unless the signature is `provider_tee`. The default model is `z-ai/glm-5.3-flash`; configure `NEARAI_MODEL` to choose another model that supports the required attestation and E2EE features. NEAR AI Cloud API keys are kept server-side. Alternatively, set `AGENT_EXECUTOR_URL` to override the built-in model call with your own executor. A custom executor receives JSON containing `task`, `job_id`, `agent_id`, `agent_account_id`, and `contract_id`; it should return JSON. The adapter hashes the result and stores only the digest on-chain.
 
 ```bash
 npm start
@@ -63,5 +69,5 @@ Health check: `GET /health`.
 - Do not expose the executor token to browser code.
 - Task text is sent to the provider endpoint and upstream executor. Do not submit passwords, private keys, or sensitive personal data.
 - The on-chain result digest proves which result JSON the provider reported; it does not prove the result is correct or useful.
-- NEAR AI Cloud requires an API key and paid credits. Its TEE-hosted models support private inference; third-party models routed through the gateway do not inherit the same TEE privacy guarantees.
+- NEAR AI Cloud requires an API key and paid credits. The built-in path requires a model that supports NEAR model attestation and E2EE; third-party models routed through the gateway are not accepted by the provider-TEE signature check.
 - This adapter currently uses the provider account key to call `complete_job`; it is a hackathon reference implementation, not a hardened production agent host.
