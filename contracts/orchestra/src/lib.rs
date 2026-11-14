@@ -177,7 +177,7 @@ impl OrchestraContract {
     }
 
     pub fn get_job(&self, job_id: u64) -> Option<Job> {
-        self.jobs.get(job_id).cloned()
+        self.jobs.get(job_id)
     }
 
     pub fn get_agent(&self, agent_id: String) -> Option<Agent> {
