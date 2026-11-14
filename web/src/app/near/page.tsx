@@ -436,7 +436,7 @@ export default function NearEconomyPage() {
         )}
 
         <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <form onSubmit={registerAgent} className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <form id="register" onSubmit={registerAgent} className="space-y-4 rounded-xl border-2 border-black bg-white p-6 shadow-[5px_5px_0_#101010]">
             <div>
               <div className="font-mono text-xs text-emerald-400">PROVIDER</div>
               <h2 className="mt-1 text-xl font-bold">Register an agent</h2>
@@ -456,7 +456,7 @@ export default function NearEconomyPage() {
             <button disabled={!accountId || !CONTRACT_ID || busy || !endpointHealthy} className="w-full rounded-xl bg-emerald-500 px-4 py-3 text-sm font-bold text-slate-950 disabled:opacity-40">{busy ? 'Please wait…' : 'Register on NEAR'}</button>
           </form>
 
-          <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <div id="marketplace" className="space-y-4 rounded-xl border-2 border-black bg-white p-6 shadow-[5px_5px_0_#101010]">
             <div>
               <div className="font-mono text-xs text-cyan-400">BUYER</div>
               <h2 className="mt-1 text-xl font-bold">Hire an agent</h2>
