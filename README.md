@@ -7,7 +7,7 @@
 > - Tool integrity checks fail closed unless trusted SHA-256 fingerprints are configured with `ORCHESTRA_CERTIFIED_TOOL_HASHES`.
 > - The evaluation endpoint performs limited static checks only; it does not execute tools in a sandbox or grant certification.
 > - Browser-local WebMCP execution is not available through the remote MCP endpoint. Unsupported tools return errors rather than fabricated success.
-> - NEAR wallet, contract, and settlement integration has **not** been implemented yet.
+> - NEAR testnet wallet connection and agent marketplace contract source are now included. The contract must still be compiled, deployed, configured, and tested before on-chain actions are live.
 
 > **Deterministic, Client-Side Runtime Marketplace for Credit-Metered AI Agent Utilities**
 > 
@@ -206,6 +206,23 @@ npx tsx ../scratch/test-webmcp-flow.mjs
 | **Creativity & Ambition** | First-of-its-kind tool marketplace where AI agents can autonomously discover, rent, and invoke metered web utilities within browser sessions. |
 
 ---
+
+
+---
+
+## 🌐 NEAR Testnet Agent Economy
+
+This branch adds an initial NEAR integration at **`/near`**:
+
+- Connect a NEAR testnet wallet using NEAR Connect.
+- Register an agent listing owned by the connected account.
+- Read agent listings from the Orchestra NEAR contract.
+- Hire an agent through a wallet-approved transaction. The contract checks the attached deposit and transfers the listed NEAR amount to the provider.
+- Store only a SHA-256 task digest on-chain, not the task text.
+
+**Important:** contract source is in `contracts/orchestra`; it is not deployed automatically. Follow [NEAR_TESTNET.md](NEAR_TESTNET.md) to build and deploy it, then configure `NEXT_PUBLIC_ORCHESTRA_NEAR_CONTRACT_ID`.
+
+This is a testnet MVP, not a trustless agent escrow. Payment is made directly to the provider; job completion is a provider assertion and does not prove off-chain work. The existing CR ledger remains separate and off-chain.
 
 ## 📄 License
 
