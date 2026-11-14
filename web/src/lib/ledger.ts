@@ -68,8 +68,8 @@ async function dbGetBalance(): Promise<number> {
     }
     return parseFloat(rows[0].credits_balance);
   } catch (err: any) {
-    console.error('[Orchestra Ledger] DB getBalance error, falling back to memory:', err.message);
-    return memoryLedger.balance;
+    console.error('[Orchestra Ledger] DB getBalance failed:', err.message);
+    throw new Error('Persistent ledger unavailable; refusing to use a divergent in-memory balance.');
   }
 }
 
@@ -163,9 +163,8 @@ async function dbRefill(amount: number): Promise<number> {
     }
     return parseFloat(rows[0].credits_balance);
   } catch (err: any) {
-    console.error('[Orchestra Ledger] DB refill error, falling back to memory:', err.message);
-    memoryLedger.balance = parseFloat((memoryLedger.balance + amount).toFixed(4));
-    return memoryLedger.balance;
+    console.error('[Orchestra Ledger] DB refill failed:', err.message);
+    throw new Error('Persistent ledger unavailable; refill was not applied.');
   }
 }
 
@@ -174,6 +173,9 @@ async function dbRefill(amount: number): Promise<number> {
 export class OrchestraLedger {
   static async getBalanceAsync(): Promise<number> {
     if (isDbAvailable()) return dbGetBalance();
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('DATABASE_URL is required in production; refusing to use the demo in-memory ledger.');
+    }
     return memoryLedger.balance;
   }
 
@@ -185,6 +187,9 @@ export class OrchestraLedger {
     if (isDbAvailable()) {
       const newBalance = await dbRefill(amount);
       return { success: true, newBalance };
+    }
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('DATABASE_URL is required in production; refill was not applied.');
     }
     memoryLedger.balance = parseFloat((memoryLedger.balance + amount).toFixed(4));
     return { success: true, newBalance: memoryLedger.balance };
@@ -266,11 +271,16 @@ export class OrchestraLedger {
           error: result.error,
         };
       } catch (err: any) {
-        console.error('[Orchestra Ledger] DB deduct error, falling back to memory:', err.message);
+        console.error('[Orchestra Ledger] DB deduct failed:', err.message);
+        if (process.env.NODE_ENV === 'production') {
+          return { success: false, remainingBalance: 0, deducted: 0, circuitBreakerTriggered: true, error: 'Persistent ledger unavailable; execution blocked and no in-memory fallback was used.' };
+        }
       }
+    } else if (process.env.NODE_ENV === 'production') {
+      return { success: false, remainingBalance: 0, deducted: 0, circuitBreakerTriggered: true, error: 'DATABASE_URL is required in production; execution blocked.' };
     }
 
-    // In-memory fallback
+    // In-memory ledger is permitted only for local development/demo.
     return this.deductCredits(params);
   }
 
@@ -340,8 +350,11 @@ export class OrchestraLedger {
       try {
         return await dbGetTransactions(limit);
       } catch (err: any) {
-        console.error('[Orchestra Ledger] DB tx fetch error, falling back to memory:', err.message);
+        console.error('[Orchestra Ledger] DB transaction fetch failed:', err.message);
+        if (process.env.NODE_ENV === 'production') throw new Error('Persistent ledger unavailable; transaction history cannot be read.');
       }
+    } else if (process.env.NODE_ENV === 'production') {
+      throw new Error('DATABASE_URL is required in production; transaction history cannot be read.');
     }
     return memoryLedger.transactions.slice(0, limit);
   }
