@@ -116,12 +116,12 @@ impl OrchestraContract {
 
     /// Provider assertion only; this does not independently verify off-chain work.
     pub fn complete_job(&mut self, job_id: u64) {
-        let mut job = self.jobs.get(job_id as u32).expect("Job not found");
+        let mut job = self.jobs.get(job_id).expect("Job not found");
         require!(job.provider == env::predecessor_account_id(), "Only the provider can complete this job");
         require!(job.status == "PAID", "Job is not awaiting completion");
         job.status = "COMPLETED".to_string();
         job.completed_at = Some(env::block_timestamp());
-        self.jobs.replace(job_id as u32, &job);
+        self.jobs.replace(job_id, &job);
     }
 
     pub fn get_agent(&self, agent_id: String) -> Option<Agent> {
